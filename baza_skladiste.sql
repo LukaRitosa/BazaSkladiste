@@ -31,33 +31,33 @@ CREATE TABLE proizvodi (
     CONSTRAINT dobavljac_id_fk FOREIGN KEY (id_dobavljac) REFERENCES dobavljaci(id_dobavljac)
 );
 
+-- SANJA
+CREATE TABLE skladista (
+    id_skladiste INTEGER PRIMARY KEY,
+    naziv_skladista VARCHAR(20) NOT NULL,
+    lokacija VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE zaposlenici(
+    id_zaposlenik INTEGER PRIMARY KEY,
+    ime VARCHAR(20) NOT NULL,
+    prezime VARCHAR(20) NOT NULL,
+    email VARCHAR(30) NOT NULL,
+    telefon VARCHAR(20) NOT NULL,
+    id_skladiste INTEGER NOT NULL,
+    CONSTRAINT skladiste_id_fk FOREIGN KEY (id_skladiste) REFERENCES skladista(id_skladiste),
+    CONSTRAINT provjera_znamenki_telefona CHECK(LENGTH(telefon)>=10 OR LENGTH(telefon)<=14),
+    CONSTRAINT provjera_email CHECK(email LIKE'%@%')
+);
+
+CREATE TABLE narudzbe (
+    id_narudzba INTEGER PRIMARY KEY,
+    datum_narudzbe DATETIME NOT NULL,
+    id_zaposlenik INTEGER NOT NULL,
+    CONSTRAINT zaposlenik_id_fk FOREIGN KEY (id_zaposlenik) REFERENCES zaposlenici(id_zaposlenik)
+);
+
 /*
-
-SANJA
-
-skladista (
-    id_kladiste PRIMARY KEY,
-    naziv_skladista,
-    lokacija
-);
-
-zaposlenici (
-    id_aposlenik PRIMARY KEY,
-    ime,
-    prezime,
-    email,
-    telefon,
-    id_skladiste,
-    FOREIGN KEY (id_skladiste) REFERENCES skladista(id_skladiste)
-);
-
-narudzbe (
-    id_narudzba PRIMARY KEY,
-    datum_narudzbe,
-    id_zaposlenik,
-    FOREIGN KEY (id_zaposlenik) REFERENCES zaposlenici(id_zaposlenik)
-);
-
 EUGEN
 
 stavke_narudzbe (
