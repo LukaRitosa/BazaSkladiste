@@ -177,3 +177,39 @@ CREATE TABLE povrati_proizvoda (
     CONSTRAINT proizvod_id_fk FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
 );
 
+-- SANJA podaci za unos
+INSERT INTO skladista VALUES 
+(123, 'Centralno', 'Zagreb'),
+(124, 'Primorsko', 'Rijeka'),
+(125, 'Sjeverno', 'Varaždin'),
+(126, 'Južno', 'Zagreb'),
+(127, 'Luka', 'Pula'),
+(128, 'Marica', 'Varaždin'),
+(129, 'Monte', 'Pula'),
+(130, 'Karlovačko', 'Karlovac'),
+(131, 'Mrežnica', 'Karlovac'),
+(132, 'Parenzo', 'Poreč'); 
+
+INSERT INTO zaposlenici VALUES 
+(161, 'Sara', 'Sarić', 's.saric@gmail.com', '09934451009', 123), 
+(162, 'Ivan', 'Ivić', 'ivan.ivic@gmail.com', '0911234567', 130), 
+(163, 'Ana', 'Anić', 'ana.anic@gmail.com', '0959876543', 122),
+(164, 'Marko', 'Marić', 'm.maric@gmail.com', '0914349899', 132), 
+(165, 'Mario', 'Stojković', 'mstojkovic@gmail.com', '0911234567', 125), 
+(166, 'Petar', 'Perić', 'p.peric44@gmail.com', '0950706556', 125),
+(164, 'Ana', 'Poslović', 'ana0poslovic@gmail.com', '0939893200', 123), 
+(165, 'Ivan', 'Stojković', 'ivan65stojkovic@gmail.com', '0973632332', 126), 
+(166, 'Dalibor', 'Ivić', 'd.ivic44@gmail.com', '0918669500', 127),
+(161, 'Sara', 'Sarić', 's.saric@gmail.com', '09934451009', 121), 
+(162, 'Ivan', 'Ivić', 'ivan.ivic@gmail.com', '0911234567', 124), 
+(163, 'Marko', 'Ognjac', 'm96ognjac@gmail.com', '0924146996', 131),
+(163, 'Sara', 'Prijedovac', 'sara_p@gmail.com', '0945758877', 127); 
+
+INSERT INTO narudzbe VALUES 
+(205,  STR_TO_DATE('09.01.2025.', '%d.%m.%Y.'), 166),
+(206, STR_TO_DATE('05.01.2025.', '%d.%m.%Y.'), 161),
+(207, STR_TO_DATE('21.12.2024.', '%d.%m.%Y.'), 165),
+(208,  STR_TO_DATE('09.01.2025.', '%d.%m.%Y.'), 165),
+(209, STR_TO_DATE('05.01.2025.', '%d.%m.%Y.'), 166),
+(210, STR_TO_DATE('09.12.2024.', '%d.%m.%Y.'), 163),
+(211, STR_TO_DATE('17.12.2024.', '%d.%m.%Y.'), 164); 
