@@ -145,35 +145,35 @@ placanja (
     nacin_placanja,
     FOREIGN KEY (id_racun) REFERENCES racuni(id_racun)
 );
-
+*/
 MARTINA
 
-inventar (
-    id_inventar PRIMARY KEY,
-    id_skladiste,
-    id_proizvod,
-    trenutna_kolicina,
-    FOREIGN KEY (id_skladiste) REFERENCES skladista(id_skladiste),
-    FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
+CREATE TABLE inventar (
+    id_inventar INTEGER PRIMARY KEY,
+    id_skladiste INTEGER NOT NULL,
+    id_proizvod INTEGER NOT NULL,
+    trenutna_kolicina INTEGER NOT NULL,
+   CONSTRAINT skladiste_id_fk FOREIGN KEY (id_skladiste) REFERENCES skladista(id_skladiste),
+   CONSTRAINT proizvodi_id_fk FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
 );
 
-dostave (
-    id_dostava PRIMARY KEY,
-    id_racun,
-    datum_dostave,
-    adresa_dostave,
-    status_dostave,
-    FOREIGN KEY (id_racun) REFERENCES racuni(id_racun)
+CREATE TABLE dostave (
+    id_dostava INTEGER PRIMARY KEY,
+    id_racun INTEGER NOT NULL,
+    datum_dostave DATETIME NOT NULL,
+    adresa_dostave VARCHAR(40) NOT NULL,
+    status_dostave VARCHAR(20) NOT NULL,
+    CONSTRAINT racun_id_fk FOREIGN KEY (id_racun) REFERENCES racuni(id_racun)
 );
 
-povrati_proizvoda (
-    id_povrat PRIMARY KEY,
-    id_racun,
-    id_proizvod,
-    kolicina,
-    datum_povrata,
-    razlog_povrata,
-    FOREIGN KEY (id_racun) REFERENCES racuni(id_racun),
-    FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
+CREATE TABLE povrati_proizvoda (
+    id_povrat INTEGER PRIMARY KEY,
+    id_racun INTEGER NOT NULL,
+    id_proizvod INTEGER NOT NULL,
+    kolicina INTEGER NOT NULL,
+    datum_povrata DATETIME NOT NULL,
+    razlog_povrata TEXT NOT NULL,
+    CONSTRAINT racun_id_fk FOREIGN KEY (id_racun) REFERENCES racuni(id_racun),
+    CONSTRAINT proizvod_id_fk FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
 );
-*/
+
