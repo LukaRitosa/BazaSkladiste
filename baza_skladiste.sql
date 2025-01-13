@@ -118,34 +118,33 @@ stavke_racuna (
     FOREIGN KEY (id_racun) REFERENCES racuni(id_zaposlenik),
     FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
 );
-
+*/
 RAMIC
 
-dobavljacke_narudzbe (
-    id_dobavljacka_narudzba PRIMARY KEY,
-    id_dobavljac,
-    datum_narudzbe,
+CREATE TABLE dobavljacke_narudzbe (
+    id_dobavljacka_narudzba INTEGER PRIMARY KEY,
+    id_dobavljac INTEGER NOT NULL,
+    datum_narudzbe DATETIME NOT NULL,
     FOREIGN KEY (id_dobavljac) REFERENCES dobavljaci(id_dobavljac)
 );
 
-stavke_dobavljacke_narudzbe (
-    id_stavka_dobavljaca PRIMARY KEY,
-    id_dobavljacka_narudzba,
-    id_proizvod,
-    kolicina,
+CREATE TABLE stavke_dobavljacke_narudzbe (
+    id_stavka_dobavljaca INTEGER PRIMARY KEY,
+    id_dobavljacka_narudzba INTEGER NOT NULL,
+    id_proizvod INTEGER NOT NULL,
+    kolicina INT NOT NULL,
     FOREIGN KEY (id_dobavljacka_narudzba) REFERENCES dobavljacke_narudzbe(id_dobavljacka_narudzba),
     FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
 );
 
-placanja (
-    id_placanje PRIMARY KEY,
-    id_racun,
-    iznos,
-    datum_placanja,
-    nacin_placanja,
-    FOREIGN KEY (id_racun) REFERENCES racuni(id_racun)
+CREATE TABLE placanja (
+    id_placanje INTEGER PRIMARY KEY,
+    id_dobavljacka_narudzba INTEGER NOT NULL,
+    iznos DECIMAL(10, 2) NOT NULL,
+    datum_placanja DATETIME NOT NULL,
+    nacin_placanja VARCHAR(30) NOT NULL,
+    FOREIGN KEY (id_dobavljacka_narudzba) REFERENCES dobavljacke_narudzbe(id_dobavljacka_narudzba)
 );
-*/
 -- MARTINA
 
 CREATE TABLE inventar (
