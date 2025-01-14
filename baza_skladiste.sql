@@ -14,7 +14,9 @@ CREATE TABLE dobavljaci (
     kontakt_osoba VARCHAR(50) NOT NULL,
     telefon CHAR(15) NOT NULL,
     email VARCHAR(30) NOT NULL,
-    adresa VARCHAR(30) NOT NULL
+    adresa VARCHAR(30) NOT NULL,
+    CONSTRAINT telefon_ck_d CHECK(LENGTH(telefon)>=10 OR LENGTH(telefon)<=14),
+    CONSTRAINT email_ck_d CHECK(email LIKE'%@%')
 );
 
 CREATE TABLE proizvodi (
@@ -91,37 +93,44 @@ CREATE TABLE izlazi_proizvoda (
 	CONSTRAINT proizvod_id_fk_ip FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod),
     CONSTRAINT skladiste_id_fk_ip FOREIGN KEY (id_skladiste) REFERENCES skladista(id_skladiste)
 );
-/*
-TONI
 
-kupci (
-    id_kupac PRIMARY KEY,
-    ime,
-    prezime,
-    email,
-    telefon,
-    adresa
+-- TONI
+
+CREATE TABLE kupci (
+    id_kupac INTEGER PRIMARY KEY,
+    ime VARCHAR(30) NOT NULL,
+    prezime VARCHAR(30) NOT NULL,
+    email VARCHAR(30) NOT NULL,
+    telefon VARCHAR(20) NOT NULL,
+    adresa VARCHAR(50) NOT NULL,
+    CONSTRAINT k_telefon_ck CHECK(LENGTH(telefon) BETWEEN 10 AND 14),
+    CONSTRAINT k_email_ck CHECK(email LIKE'%@%')
 );
 
-racuni (
-    id_racun PRIMARY KEY,
-    datum_racuna,
-    id_kupac,
-    id_zaposlenik,
-    FOREIGN KEY (id_kupac) REFERENCES kupci(id_kupac),
-    FOREIGN KEY (id_zaposlenik) REFERENCES zaposlenici(id_zaposlenik)
+
+CREATE TABLE racuni (
+    id_racun INTEGER PRIMARY KEY,
+    datum_racuna DATETIME NOT NULL,
+    id_kupac INTEGER NOT NULL,
+    id_zaposlenik INTEGER NOT NULL,
+    CONSTRAINT kupac_id_fk_r FOREIGN KEY (id_kupac) REFERENCES kupci(id_kupac),
+    CONSTRAINT zaposlenik_id_fk_r FOREIGN KEY (id_zaposlenik) REFERENCES zaposlenici(id_zaposlenik)
 );
 
-stavke_racuna (
-    id_stavka_racun PRIMARY KEY,
-    id_racun,
-    id_proizvod,
-    kolicina,
-    cijena,
-    FOREIGN KEY (id_racun) REFERENCES racuni(id_zaposlenik),
-    FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
+drop TABLE stavke_racuna;
+
+CREATE TABLE stavke_racuna (
+    id_stavka_racun INTEGER PRIMARY KEY,
+    id_racun INTEGER NOT NULL,
+    id_proizvod INTEGER NOT NULL,
+    kolicina INTEGER NOT NULL,
+    cijena DECIMAL(8,2) NOT NULL,
+    CONSTRAINT sr_cijena_ck CHECK (cijena > -1),
+	CONSTRAINT kolicina_sr_ck CHECK (kolicina > 0),
+    CONSTRAINt racun_id_fk_sr FOREIGN KEY (id_racun) REFERENCES racuni(id_racun),
+    CONSTRAINT proizvod_id_fk FOREIGN KEY (id_proizvod) REFERENCES proizvodi(id_proizvod)
 );
-*/
+
 
 -- RAMIC
 
@@ -491,3 +500,116 @@ INSERT INTO placanja (id_placanje, id_dobavljacka_narudzba, iznos, datum_placanj
 (588, 508, 280.00, '2024-02-28 13:30:00', 'Kartica'),
 (589, 509, 290.00, '2024-03-01 14:00:00', 'Gotovina'),
 (590, 510, 300.00, '2024-03-02 14:30:00', 'Online');
+
+
+INSERT INTO kupci (id_kupac, ime, prezime, email, telefon, adresa) VALUES
+(361, 'Ivan', 'Horvat', 'ivan.horvat1@example.com', '0912345678', 'Zagrebačka 1, Zagreb'),
+(362, 'Ana', 'Kovač', 'ana.kovac2@example.com', '0912345679', 'Split 5, Split'),
+(363, 'Marko', 'Ivić', 'marko.ivic3@example.com', '0912345680', 'Dubrovnička 8, Dubrovnik'),
+(364, 'Lucija', 'Babić', 'lucija.babic4@example.com', '0912345681', 'Osječka 3, Osijek'),
+(365, 'Petar', 'Jurić', 'petar.juric5@example.com', '0912345682', 'Zadarska 4, Zadar'),
+(366, 'Maja', 'Savić', 'maja.savic6@example.com', '0912345683', 'Trogirska 2, Trogir'),
+(367, 'Josip', 'Matić', 'josip.matic7@example.com', '0912345684', 'Vukovarska 7, Vukovar'),
+(368, 'Klara', 'Novak', 'klara.novak8@example.com', '0912345685', 'Slavonska 6, Slavonski Brod'),
+(369, 'Luka', 'Perković', 'luka.perkovic9@example.com', '0912345686', 'Karlovačka 10, Karlovac'),
+(370, 'Sara', 'Grgić', 'sara.grgic10@example.com', '0912345687', 'Dubrovnička 12, Dubrovnik'),
+(371, 'Tomislav', 'Radić', 'tomislav.radic11@example.com', '0912345688', 'Riječna 11, Rijeka'),
+(372, 'Eva', 'Pavić', 'eva.pavic12@example.com', '0912345689', 'Primorska 15, Pula'),
+(373, 'Nikola', 'Kolar', 'nikola.kolar13@example.com', '0912345690', 'Sisačka 16, Sisak'),
+(374, 'Lana', 'Vuković', 'lana.vukovic14@example.com', '0912345691', 'Bjelovarska 17, Bjelovar'),
+(375, 'Ivana', 'Zorić', 'ivana.zoric15@example.com', '0912345692', 'Varaždinska 18, Varaždin'),
+(376, 'Fran', 'Šimunović', 'fran.simunovic16@example.com', '0912345693', 'Zagrebačka 19, Zagreb'),
+(377, 'Andrea', 'Knežević', 'andrea.knezevic17@example.com', '0912345694', 'Osječka 20, Osijek'),
+(378, 'David', 'Tomić', 'david.tomic18@example.com', '0912345695', 'Šibenik 21, Šibenik'),
+(379, 'Ivana', 'Soldo', 'ivana.soldo19@example.com', '0912345696', 'Rijeka 22, Rijeka'),
+(380, 'Gabrijela', 'Lukić', 'gabrijela.lukic20@example.com', '0912345697', 'Split 23, Split'),
+(381, 'Dino', 'Pavić', 'dino.pavic21@example.com', '0912345698', 'Trogir 24, Trogir'),
+(382, 'Maja', 'Hrvatska', 'maja.hrvat21@example.com', '0912345699', 'Zadar 25, Zadar'),
+(383, 'Ivica', 'Barišić', 'ivica.barisic22@example.com', '0912345700', 'Pula 26, Pula'),
+(384, 'Monika', 'Gajić', 'monika.gajic23@example.com', '0912345701', 'Riječna 27, Rijeka'),
+(385, 'Marko', 'Vranjić', 'marko.vranjic24@example.com', '0912345702', 'Slavonska 28, Slavonski Brod'),
+(386, 'Tea', 'Marin', 'tea.marin25@example.com', '0912345703', 'Zagreb 29, Zagreb'),
+(387, 'Nikola', 'Lukić', 'nikola.lukic26@example.com', '0912345704', 'Osijek 30, Osijek'),
+(388, 'Katarina', 'Čović', 'katarina.covic27@example.com', '0912345705', 'Trogir 31, Trogir'),
+(389, 'Petra', 'Vlahović', 'petra.vlahovic28@example.com', '0912345706', 'Karlovac 32, Karlovac'),
+(390, 'Marija', 'Gavran', 'marija.gavran29@example.com', '0912345707', 'Split 33, Split');
+
+
+
+INSERT INTO racuni (id_racun, datum_racuna, id_kupac, id_zaposlenik) VALUES
+(401, '2024-06-02 09:15:20', 367, 163),
+(402, '2024-03-19 11:35:30', 365, 161),
+(403, '2024-07-25 16:47:50', 364, 163),
+(404, '2024-01-30 12:59:00', 368, 162),
+(405, '2024-02-10 13:25:00', 369, 161),
+(406, '2024-08-15 17:14:40', 371, 163),
+(407, '2024-04-10 08:22:15', 372, 162),
+(408, '2024-03-29 15:39:00', 373, 161),
+(409, '2024-11-01 09:10:30', 374, 163),
+(410, '2024-05-05 10:05:10', 375, 162),
+(411, '2024-06-13 18:55:45', 376, 161),
+(412, '2024-10-20 11:21:35', 377, 163),
+(413, '2024-07-03 14:04:30', 378, 161),
+(414, '2024-09-11 12:15:10', 379, 163),
+(415, '2024-03-02 16:30:00', 380, 162),
+(416, '2024-06-17 08:50:20', 381, 161),
+(417, '2024-05-27 13:23:40', 382, 163),
+(418, '2024-01-11 09:50:50', 383, 162),
+(419, '2024-02-21 15:11:25', 384, 163),
+(420, '2024-08-29 10:42:30', 385, 161),
+(421, '2024-04-18 14:00:00', 386, 162),
+(422, '2024-03-25 09:30:10', 387, 161),
+(423, '2024-10-09 16:22:50', 388, 163),
+(424, '2024-07-05 12:34:45', 389, 161),
+(425, '2024-11-17 08:58:10', 390, 162),
+(426, '2024-05-09 10:25:30', 368, 163),
+(427, '2024-09-14 15:14:00', 369, 162),
+(428, '2024-06-30 12:00:00', 371, 161),
+(429, '2024-02-18 10:20:45', 373, 163),
+(430, '2024-04-06 14:40:00', 374, 162);
+
+
+INSERT INTO stavke_racuna (id_stavka_racun, id_racun, id_proizvod, kolicina, cijena) VALUES
+(441, 401, 12, 3, 120.50),
+(442, 401, 5, 2, 40.75),
+(443, 401, 3, 1, 65.20),
+(444, 402, 10, 1, 22.99),
+(445, 402, 14, 2, 34.50),
+(446, 403, 18, 1, 80.99),
+(447, 404, 8, 5, 99.00),
+(448, 405, 21, 3, 62.80),
+(449, 406, 9, 4, 55.60),
+(450, 407, 6, 3, 58.90),
+(451, 408, 4, 2, 130.45),
+(452, 409, 22, 3, 88.30),
+(453, 409, 27, 4, 120.00),
+(454, 410, 20, 1, 45.75),
+(455, 410, 15, 2, 33.40),
+(456, 411, 1, 5, 22.60),
+(457, 411, 25, 2, 70.99),
+(458, 412, 24, 4, 49.95),
+(459, 413, 16, 3, 12.80),
+(460, 413, 30, 2, 55.50),
+(461, 414, 28, 1, 200.00),
+(462, 415, 29, 2, 99.50),
+(463, 416, 5, 3, 60.10),
+(464, 416, 7, 2, 84.99),
+(465, 417, 8, 1, 75.60),
+(466, 418, 22, 2, 90.00),
+(467, 418, 9, 3, 39.40),
+(468, 419, 6, 1, 58.00),
+(469, 420, 3, 2, 100.00),
+(470, 421, 18, 1, 55.75),
+(471, 422, 17, 4, 110.00),
+(472, 423, 2, 1, 45.50),
+(473, 423, 14, 3, 80.00),
+(474, 424, 23, 1, 37.40),
+(475, 425, 19, 2, 65.20),
+(476, 426, 12, 1, 50.50),
+(477, 427, 7, 2, 48.00),
+(478, 428, 5, 3, 56.40),
+(479, 429, 10, 1, 77.00),
+(480, 430, 13, 4, 120.00);
+
+
+
