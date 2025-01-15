@@ -708,3 +708,60 @@ INSERT INTO povrati_proizvoda(id_povrat, id_racun, id_proizvod, kolicina, datum_
 (708, 428, 28, 5, '2025-03-10','Pogrešan model'),
 (709, 429, 29, 2, '2025-03-11','Pogrešna boja'),
 (710, 430, 3, 10, '2025-03-12','Poslana pogrešna kolićina');
+
+
+
+-- Luka
+
+select naziv_dobavljaca, naziv_kategorije, count(*) broj_proizvoda
+	from proizvodi
+join kategorije 
+	on kategorije.id_kategorija=proizvodi.id_kategorija
+join dobavljaci 
+	on dobavljaci.id_dobavljac=proizvodi.id_dobavljac
+group by dobavljaci.naziv_dobavljaca, kategorije.id_kategorija
+order by broj_proizvoda desc
+limit 3;
+
+select racuni.id_racun, sum(cijena*kolicina) ukupno
+	from racuni 
+join kupci k
+	on k.id_kupac=racuni.id_kupac
+join stavke_racuna sr
+	on sr.id_racun=racuni.id_racun
+join proizvodi p
+	on p.id_proizvod=sr.id_proizvod
+group by racuni.id_racun;
+
+select k.naziv_kategorije , sum(kolicina) as ukupno_prodano
+	from stavke_racuna sr
+join proizvodi p
+	on p.id_proizvod=sr.id_proizvod
+join kategorije k  
+	on  k.id_kategorija=p.id_kategorija
+group by k.naziv_kategorije
+order by ukupno_prodano desc
+limit 5;
+
+
+
+CREATE VIEW pregled_zaliha AS
+SELECT s.naziv_skladista, p.naziv_proizvoda, i.trenutna_kolicina
+	FROM inventar i
+JOIN skladista s 
+	ON i.id_skladiste = s.id_skladiste
+JOIN proizvodi p 
+	ON i.id_proizvod = p.id_proizvod;
+ 
+ 
+DELIMITER // 
+CREATE TRIGGER azuriraj_zalihe_ulaz
+AFTER INSERT ON ulazi_proizvoda
+FOR EACH ROW
+BEGIN
+    UPDATE inventar
+    SET trenutna_kolicina = trenutna_kolicina + NEW.kolicina
+    WHERE id_proizvod = NEW.id_proizvod AND id_skladiste = NEW.id_skladiste;
+    
+END//
+DELIMITER ;
