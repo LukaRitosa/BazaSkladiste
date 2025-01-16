@@ -755,7 +755,7 @@ JOIN proizvodi p
  
  
 DELIMITER // 
-CREATE TRIGGER azuriraj_zalihe_ulaz
+CREATE TRIGGER ai_ulazi_proizvoda
 AFTER INSERT ON ulazi_proizvoda
 FOR EACH ROW
 BEGIN
