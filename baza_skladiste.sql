@@ -759,9 +759,163 @@ CREATE TRIGGER ai_ulazi_proizvoda
 AFTER INSERT ON ulazi_proizvoda
 FOR EACH ROW
 BEGIN
+    
+    UPDATE proizvodi
+		SET kolicina_na_skladistu = kolicina_na_skladistu + NEW.kolicina
+    WHERE id_proizvod = NEW.id_proizvod;
+    
     UPDATE inventar
     SET trenutna_kolicina = trenutna_kolicina + NEW.kolicina
     WHERE id_proizvod = NEW.id_proizvod AND id_skladiste = NEW.id_skladiste;
     
 END//
 DELIMITER ;
+
+select @@autocommit;
+
+SET AUTOCOMMIT= off;
+
+
+DELIMITER // 
+CREATE procedure novi_poizvod(
+	IN p_id_proizvod INTEGER,
+    IN p_naziv_proizvoda VARCHAR(30),
+    IN p_opis TEXT,
+    IN p_cijena DECIMAL(8, 2),
+    IN p_kolicina_na_skladistu INT,
+    IN p_id_kategorija INT,
+    IN p_id_dobavljac INT
+    )
+BEGIN
+	
+    DECLARE EXIT HANDLER FOR 1062
+		BEGIN
+			ROLLBACK;
+            SELECT CONCAT("Proizvod sa id-em ",p_id_proizvod," već postoji");
+        END;
+        
+	SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    START TRANSACTION;
+    INSERT INTO proizvodi (id_proizvod, naziv_proizvoda, opis, cijena, kolicina_na_skladistu, id_kategorija, id_dobavljac)
+    VALUES(p_id_proizvod, p_naziv_proizvoda, p_opis, p_cijena, p_kolicina_na_skladistu, p_id_kategorija, p_id_dobavljac);
+	COMMIT;
+    
+END//
+DELIMITER ;
+
+CALL novi_poizvod(31, 'Fen za kosu', 'Snažan fen za kosu', 12.00, 140, 43, 82);
+
+select *
+	from proizvodi;
+
+
+
+DELIMITER //
+CREATE PROCEDURE nazivi_kategorije(OUT p_nazivi_kategorije VARCHAR(4000))
+BEGIN
+	 
+	 DECLARE kat VARCHAR(100) DEFAULT "";
+	 DECLARE finished INTEGER DEFAULT 0;
+
+	 DECLARE cur CURSOR FOR
+		SELECT naziv_kategorije 
+			FROM kategorije;
+
+	 DECLARE CONTINUE HANDLER
+	 FOR NOT FOUND SET finished = 1;
+
+	 SET p_nazivi_kategorije = "";
+
+	 OPEN CUR;
+
+	 prolazi_kategorije: LOOP
+
+	 FETCH cur INTO kat;
+
+	 IF finished = 1 THEN
+		LEAVE prolazi_kategorije;
+	 END IF;
+     
+	 SET p_nazivi_kategorije = CONCAT(kat,";",p_nazivi_kategorije);
+
+	 END LOOP prolazi_kategorije;
+
+	 CLOSE cur;
+	 SET p_nazivi_kategorije = CONCAT("GOTOVO",";",p_nazivi_kategorije);
+
+END //
+DELIMITER ;
+
+CALL nazivi_kategorije(@kategorije);
+SELECT @kategorije;
+
+SELECT naziv_kategorije 
+		FROM kategorije;
+      
+drop FUNCTION popust;      
+
+DELIMITER //
+CREATE FUNCTION popust(f_id_proizvod integer, f_postotak decimal(8,2)) RETURNS decimal(8,2)
+DETERMINISTIC
+BEGIN
+	
+    declare f_cijena decimal(8,2);
+	declare spustena_cijena decimal(8,2);
+    set f_postotak=f_postotak/100;
+	set f_postotak=1-f_postotak;
+
+    select cijena into f_cijena
+		from proizvodi
+	where id_proizvod=f_id_proizvod;
+	
+	set spustena_cijena=f_cijena*f_postotak;
+    
+	RETURN spustena_cijena;
+END //
+DELIMITER ;
+
+select popust(1,25) from dual;
+select *, popust(id_proizvod, 25)
+	from proizvodi;
+    
+
+
+drop  FUNCTION koliko_ima_na_skladistu;    
+
+DELIMITER //
+CREATE FUNCTION koliko_ima_na_skladistu(f_id_skladiste integer, f_id_proizvod integer) RETURNS varchar(500)
+DETERMINISTIC
+BEGIN
+	
+    declare f_kolicina integer DEFAULT NULL;
+	declare f_ime_skladista varchar(20) DEFAULT NULL;
+	declare f_ime_proizvoda varchar(20) DEFAULT NULL;
+    declare rez varchar(500) DEFAULT "";
+    
+    
+    select trenutna_kolicina into f_kolicina
+		from inventar
+	where id_skladiste=f_id_skladiste and id_proizvod=f_id_proizvod;
+    
+    select naziv_proizvoda into f_ime_proizvoda
+		from proizvodi
+	where id_proizvod=f_id_proizvod;
+
+	select naziv_skladista into f_ime_skladista
+		from skladista
+	where id_skladiste=f_id_skladiste;
+    
+	IF f_kolicina IS NULL OR f_ime_proizvoda IS NULL OR f_ime_skladista IS NULL THEN
+        RETURN "Greška";
+    END IF;
+    
+    set rez=concat("Na skladistu ", f_ime_skladista, " ima prozvoda ", f_ime_proizvoda," u kolicini od: ", f_kolicina);
+    
+	RETURN rez;
+END //
+DELIMITER ;
+
+select koliko_ima_na_skladistu(123, 1) from dual;
+select * 
+	from inventar
+where id_skladiste=123 ;
