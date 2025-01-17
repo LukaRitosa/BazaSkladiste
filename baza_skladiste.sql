@@ -919,3 +919,222 @@ select koliko_ima_na_skladistu(123, 1) from dual;
 select * 
 	from inventar
 where id_skladiste=123 ;
+
+-- Sustav za upravljanje skladiste trgovine
+DROP DATABASE IF EXISTS baza_skladiste;
+CREATE DATABASE baza_skladiste;
+USE baza_skladiste;
+
+-- SANJA
+CREATE TABLE skladista (
+    id_skladiste INTEGER PRIMARY KEY,
+    naziv_skladista VARCHAR(20) NOT NULL,
+    lokacija VARCHAR(30) NOT NULL
+);
+
+	CREATE TABLE zaposlenici(
+    id_zaposlenik INTEGER PRIMARY KEY,
+    ime VARCHAR(20) NOT NULL,
+    prezime VARCHAR(20) NOT NULL,
+    email VARCHAR(30) NOT NULL,
+    telefon VARCHAR(20) NOT NULL,
+    id_skladiste INTEGER NOT NULL,
+    CONSTRAINT skladiste_id_fk FOREIGN KEY (id_skladiste) REFERENCES skladista(id_skladiste),
+    CONSTRAINT provjera_znamenki_telefona CHECK(LENGTH(telefon)>=10 OR LENGTH(telefon)<=14),
+    CONSTRAINT provjera_email CHECK(email LIKE'%@%')
+);
+
+CREATE TABLE narudzbe (
+    id_narudzba INTEGER PRIMARY KEY,
+    datum_narudzbe DATETIME NOT NULL,
+    id_zaposlenik INTEGER NOT NULL,
+    CONSTRAINT zaposlenik_id_fk FOREIGN KEY (id_zaposlenik) REFERENCES zaposlenici(id_zaposlenik)
+);
+
+-- SANJA podaci za testiranje
+INSERT INTO skladista VALUES 
+(123, 'Centralno', 'Zagreb'),
+(124, 'Primorsko', 'Rijeka'),
+(125, 'Sjeverno', 'Varaždin'),
+(126, 'Južno', 'Zagreb'),
+(127, 'Luka', 'Pula'),
+(128, 'Marica', 'Varaždin'),
+(129, 'Monte', 'Pula'),
+(130, 'Karlovačko', 'Karlovac'),
+(131, 'Mrežnica', 'Karlovac'),
+(132, 'Parenzo', 'Poreč'); 
+
+INSERT INTO zaposlenici VALUES 
+(161, 'Sara', 'Sarić', 's.saric@gmail.com', '09934451009', 123), 
+(162, 'Ivan', 'Ivić', 'ivan.ivic@gmail.com', '0911234567', 130), 
+(163, 'Ana', 'Anić', 'ana.anic@gmail.com', '0959876543', 124),
+(164, 'Marko', 'Marić', 'm.maric@gmail.com', '0914349899', 132), 
+(165, 'Mario', 'Stojković', 'mstojkovic@gmail.com', '0911234567', 125), 
+(166, 'Petar', 'Perić', 'p.peric44@gmail.com', '0950706556', 125),
+(167, 'Ana', 'Poslović', 'ana0poslovic@gmail.com', '0939893200', 123), 
+(168, 'Ivan', 'Stojković', 'ivan65stojkovic@gmail.com', '0973632332', 126), 
+(169, 'Dalibor', 'Ivić', 'd.ivic44@gmail.com', '0918669500', 127),
+(170, 'Sara', 'Sarić', 's.saric@gmail.com', '09934451009', 126), 
+(171, 'Ivan', 'Ivić', 'ivan.ivic@gmail.com', '0911234567', 124), 
+(172, 'Marko', 'Ognjac', 'm96ognjac@gmail.com', '0924146996', 131),
+(173, 'Sara', 'Prijedovac', 'sara_p@gmail.com', '0945758877', 127); 
+
+INSERT INTO narudzbe VALUES 
+(205,  STR_TO_DATE('09.01.2025.', '%d.%m.%Y.'), 166),
+(206, STR_TO_DATE('05.01.2025.', '%d.%m.%Y.'), 161),
+(207, STR_TO_DATE('21.12.2024.', '%d.%m.%Y.'), 165),
+(208,  STR_TO_DATE('09.01.2025.', '%d.%m.%Y.'), 165),
+(209, STR_TO_DATE('05.01.2025.', '%d.%m.%Y.'), 166),
+(210, STR_TO_DATE('09.12.2024.', '%d.%m.%Y.'), 163),
+(211, STR_TO_DATE('17.12.2024.', '%d.%m.%Y.'), 164); 
+
+
+-- SANJA:
+
+-- Broj zaposlenika po skladištu(POGLED):
+CREATE VIEW broj_zaposlenika_po_skladistu AS
+SELECT s.naziv_skladista, COUNT(z.id_zaposlenik) AS broj_zaposlenika
+FROM skladista s
+LEFT JOIN zaposlenici z ON s.id_skladiste = z.id_skladiste
+GROUP BY s.naziv_skladista;
+
+SELECT * FROM broj_zaposlenika_po_skladistu;
+
+-- UPITI
+-- 1.) Koliko je puta neki zaposlenik izvršio narudžbi:
+SELECT z.id_zaposlenik, z.ime, z.prezime, COUNT(n.id_zaposlenik) AS broj_narudzbi 
+FROM zaposlenici z 
+JOIN narudzbe n ON z.id_zaposlenik = n.id_zaposlenik
+GROUP BY n.id_zaposlenik
+ORDER BY broj_narudzbi DESC;
+
+-- 2.) Popis zaposlenika koji imaju narudžbe u zadnjih 30 dana
+SELECT z.ime, z.prezime, z.email, n.datum_narudzbe
+FROM zaposlenici z
+JOIN narudzbe n ON z.id_zaposlenik = n.id_zaposlenik
+WHERE n.datum_narudzbe >= NOW() - INTERVAL 30 DAY
+ORDER BY n.datum_narudzbe DESC;
+
+-- 3.) koliko je narudžbi obradilo svako skladište, s nazivima skladišta i brojem narudžbi
+SELECT s.naziv_skladista, COUNT(n.id_narudzba) AS broj_narudzbi
+FROM skladista s
+LEFT JOIN zaposlenici z ON s.id_skladiste = z.id_skladiste
+LEFT JOIN narudzbe n ON z.id_zaposlenik = n.id_zaposlenik
+GROUP BY s.naziv_skladista
+ORDER BY broj_narudzbi DESC;
+
+-- FUNKCIJE: 
+-- 1.) Dohvaćanje ukupnog broja narudžbi zaposlenika po ID-u
+
+DELIMITER //
+CREATE FUNCTION broj_narudzbi_zaposlenika(zaposlenik_id INTEGER)
+RETURNS INTEGER
+DETERMINISTIC
+BEGIN
+    DECLARE broj_narudzbi INTEGER;
+    SELECT COUNT(*) INTO broj_narudzbi
+    FROM narudzbe
+    WHERE id_zaposlenik = zaposlenik_id;
+    RETURN broj_narudzbi;
+END //
+
+DELIMITER ;
+
+SELECT * FROM narudzbe;
+SELECT  broj_narudzbi_zaposlenika(165) FROM DUAL;
+
+-- 2.) Dohvaćanje ukupnog broja zaposlenika u određenom skladištu
+
+DELIMITER //
+CREATE FUNCTION broj_zaposlenika_skladiste(skladiste_id INTEGER)
+RETURNS INTEGER
+DETERMINISTIC
+BEGIN
+    DECLARE broj INTEGER;
+    SELECT COUNT(*) INTO broj
+    FROM zaposlenici
+    WHERE id_skladiste = skladiste_id;
+    RETURN broj;
+END //
+
+DELIMITER ;
+
+SELECT * FROM zaposlenici;
+SELECT  broj_narudzbi_zaposlenika(165) FROM DUAL;
+
+-- PROCEDURA + TRANSAKCIJA:
+-- 1.) Dodavanje radnika na skladište: 
+SELECT @@autocommit;
+SET AUTOCOMMIT = OFF;
+
+DROP PROCEDURE IF EXISTS zaposljavanje;
+DELIMITER //
+CREATE PROCEDURE zaposljavanje(p_id INTEGER, p_ime VARCHAR(20), p_prezime VARCHAR(20), p_email VARCHAR(30), p_telefon VARCHAR(20),p_id_skladiste INTEGER)
+BEGIN
+    SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    START TRANSACTION;
+		IF EXISTS (SELECT 1 FROM zaposlenici WHERE id_zaposlenik=p_id OR telefon=p_telefon OR email=p_email) THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = 'Ne možeš dodati zaposlenika koji ima isti ID/telefon/email postojećeg zaposlenika!';
+		ROLLBACK;
+		END IF;
+			IF p_id<161 OR p_id>200 THEN
+			SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Ne možeš dodati ID zaposlenika koji je izvan dozvoljenog raspona!';
+			ROLLBACK;
+			END IF;
+				IF NOT EXISTS (SELECT 1 FROM skladista WHERE id_skladiste = p_id_skladiste) THEN
+				SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = 'Nepostojeće skladište!';
+				ROLLBACK;
+				END IF;
+    INSERT INTO zaposlenici 
+    VALUES (p_id, p_ime, p_prezime, p_email, p_telefon, p_id_skladiste);
+    COMMIT;
+END //
+DELIMITER ;
+
+SELECT * FROM zaposlenici;
+CALL zaposljavanje(174, 'Franjo', 'Franjevački', 'franjo_franjo@gmail.com', '0956769009',125);
+SELECT * FROM zaposlenici;
+DELETE FROM zaposlenici WHERE id=174;
+
+SET AUTOCOMMIT = ON;
+-- PROCEDURA: 
+-- 2.)Prikaz narudžbi zaposlenika po ID-u i filtriranje po datumu
+DELIMITER //
+CREATE PROCEDURE prikaz_narudzbi_zaposlenika(IN zaposlenik_id INTEGER, IN pocetni_datum DATE, IN zavrsni_datum DATE)
+BEGIN
+    SELECT n.id_narudzba, n.datum_narudzbe, z.ime, z.prezime
+    FROM narudzbe n
+    JOIN zaposlenici z ON n.id_zaposlenik = z.id_zaposlenik
+    WHERE n.id_zaposlenik = zaposlenik_id
+      AND n.datum_narudzbe BETWEEN pocetni_datum AND zavrsni_datum
+    ORDER BY n.datum_narudzbe;
+END //
+DELIMITER ;
+
+CALL prikaz_narudzbi_zaposlenika(166, '2025-01-01', '2025-01-10');
+
+-- OKIDAČ:  
+-- Sprječavanje dodavanja narudžbe za zaposlenika koji već ima narudžbu na isti datum
+DELIMITER //
+CREATE TRIGGER sprijeci_duple_narudzbe
+BEFORE INSERT ON narudzbe
+FOR EACH ROW
+BEGIN
+    DECLARE postoji INTEGER;
+    SELECT COUNT(*) INTO postoji
+    FROM narudzbe
+    WHERE id_zaposlenik = NEW.id_zaposlenik
+      AND DATE(datum_narudzbe) = DATE(NEW.datum_narudzbe);
+    IF postoji>0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT='Zaposlenik već ima narudžbu na isti datum.';
+    END IF;
+END
+// DELIMITER ;
+
+INSERT INTO narudzbe (id_narudzba, datum_narudzbe, id_zaposlenik)
+VALUES (301, STR_TO_DATE('09.01.2025.', '%d.%m.%Y.'), 165);
+
