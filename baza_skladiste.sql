@@ -630,24 +630,24 @@ INSERT INTO inventar(id_inventar, id_skladiste, id_proizvod, trenutna_kolicina) 
 (615, 125, 13, 60),
 (616, 127, 11, 90),
 (617, 126, 26, 25),
-(617, 130, 27, 7),
-(618, 128, 4, 300),
-(619, 129, 15, 110),
-(620, 129, 24, 12),
-(621, 131, 23, 25),
-(622, 132, 17, 70),
-(623, 125, 18, 40),
-(624, 123, 12, 120),
-(625, 123, 21, 8),
-(626, 126, 22, 20),
-(627, 123, 25, 180),
-(628, 130, 9, 150),
-(629, 130, 28, 100),
-(630, 129, 2, 200);
+(687, 130, 27, 7),
+(619, 128, 4, 300),
+(620, 129, 15, 110),
+(621, 129, 24, 12),
+(622, 131, 23, 25),
+(623, 132, 17, 70),
+(624, 125, 18, 40),
+(625, 123, 12, 120),
+(626, 123, 21, 8),
+(627, 126, 22, 20),
+(628, 123, 25, 180),
+(629, 130, 9, 150),
+(630, 130, 28, 100),
+(631, 129, 2, 200);
 
 INSERT INTO dostave(id_dostava, id_racun, datum_dostave, adresa_dostave, status_dostave) VALUES
-(641, 401, '2025-02-10', 'Vukovarska 7, Vukovar', 'Dostavljeno'),
-(642, 402, '2025-02-11', 'Zadarska 4, Zadar', 'Dostavljeno'),
+(640, 401, '2025-02-10', 'Vukovarska 7, Vukovar', 'Dostavljeno'),
+(641, 402, '2025-02-11', 'Zadarska 4, Zadar', 'Dostavljeno'),
 (642, 403, '2025-02-12', 'Osječka 3, Osijek', 'Dostavljeno'),
 (643, 404, '2025-02-13', 'Slavonska 6, Slavonski Brod', 'Dostavljeno'),
 (644, 405, '2025-02-14', 'Karlovačka 10, Karlovac', 'Dostavljeno'),
@@ -1069,3 +1069,168 @@ END
 INSERT INTO narudzbe (id_narudzba, datum_narudzbe, id_zaposlenik)
 VALUES (301, STR_TO_DATE('09.01.2025.', '%d.%m.%Y.'), 165);
 
+-- MARTINA
+
+-- Stanje skaldišta(POGLED)
+CREATE VIEW stanje_inventara AS
+SELECT  p.id_proizvod, p.naziv_proizvoda, p.opis AS opis_proizvoda, p.cijena,i.trenutna_kolicina, k.naziv_kategorije, s.naziv_skladista, s.lokacija
+FROM inventar i
+JOIN proizvodi p ON i.id_proizvod = p.id_proizvod
+JOIN kategorije k ON p.id_kategorija = k.id_kategorija
+JOIN skladista s ON i.id_skladiste = s.id_skladiste;
+
+SELECT * FROM stanje_inventara;
+
+-- UPIT 
+	-- 1.Ukupan broj povrata
+    SELECT p.id_proizvod, p.naziv_proizvoda, SUM(i.kolicina) AS broj_povrata
+    FROM povrati_proizvoda
+    JOIN inventar i on p.id_proizvod = i.proizvod_id
+    GROUP BY p.id_proizvod, p.naziv_proizvoda
+    ORDER BY broj_povrata DESC;
+    
+    -- 2.Najprodavaniji proizvod
+    SELECT  p.id_proizvod, i.naziv_proizvoda, SUM(n.kolicina) AS ukupno_prodano
+		FROM stavke_racuna sr
+	JOIN proizvodi p ON sr.id_proizvod = p.id_proizvod
+	JOIN inventar i ON p.id_proizvod = i.id_proizvod
+	GROUP BY p.id_proizvod, i.naziv_proizvoda
+	ORDER BY ukupno_prodano DESC
+		LIMIT 1;
+        
+	-- 3.Mala količina 
+    SELECT i.id_proizvod, p.naziv_proizvoda, i.trenutna_kolicina
+	FROM inventar i
+		JOIN proizvodi p ON i.id_proizvod = p.id_proizvod
+	WHERE i.trenutna_kolicina < 10
+	ORDER BY i.trenutna_kolicina ASC;
+    
+    -- FUNKCIJE
+    -- 1.Trenutna količina 
+    DELIMITER //
+
+	CREATE FUNCTION trenutna_kolicina_proizvoda(p_id_proizvod INTEGER)
+	RETURNS INTEGER
+	DETERMINISTIC
+	BEGIN
+		DECLARE kolicina INTEGER;
+    
+    SELECT trenutna_kolicina INTO kolicina
+    FROM inventar
+    WHERE id_proizvod = p_id_proizvod;
+    
+    RETURN kolicina;
+	END //
+
+	DELIMITER ;
+    
+    -- 2.Vraća status dostave prema ID-u
+    DELIMITER //
+	CREATE FUNCTION status_dostave_prema_id(p_id_dostava INTEGER)
+	RETURNS VARCHAR(20)
+	DETERMINISTIC
+	BEGIN
+		DECLARE status VARCHAR(20);
+    
+    SELECT status_dostave INTO status
+    FROM dostave
+    WHERE id_dostava = p_id_dostava;
+    
+   
+    RETURN status;
+	END //
+
+	DELIMITER ;
+    
+    -- Procedura + tranakcija
+    -- 1.Pračenje statusa dostave
+    DELIMITER//
+
+CREATE PROCEDURE azuriraj_status_dostave(
+    IN p_id_dostava INT,
+    IN p_novi_status VARCHAR(20)
+)
+BEGIN
+    START TRANSACTION;
+
+    UPDATE dostave
+    SET status_dostave = p_novi_status
+    WHERE id_dostava = p_id_dostava;
+
+    IF ROW_COUNT() = 0 THEN
+        SELECT 'Nema dostave s tim ID-om.' AS error_message;
+        ROLLBACK;
+    ELSE
+        SELECT 'Status dostave je uspješno ažuriran!' AS success_message;
+        COMMIT;
+    END IF;
+END $$
+
+DELIMITER ;
+
+    
+
+-- 2. Povrat proizvoda
+DELIMITER//
+
+CREATE PROCEDURE PovratProizvoda(
+    IN p_id_racun INT,                
+    IN p_id_proizvod INT,              
+    IN p_kolicina INT,                 
+    IN p_razlog_povrata TEXT           
+)
+BEGIN
+    DECLARE v_trenutna_kolicina INT;
+
+    SELECT trenutna_kolicina
+    INTO v_trenutna_kolicina
+    FROM inventar
+    WHERE id_proizvod = p_id_proizvod
+    LIMIT 1;
+
+    IF v_trenutna_kolicina >= p_kolicina THEN
+	
+        START TRANSACTION;
+
+	
+        UPDATE inventar
+        SET trenutna_kolicina = trenutna_kolicina + p_kolicina
+        WHERE id_proizvod = p_id_proizvod;
+
+        INSERT INTO povrati_proizvoda (id_racun, id_proizvod, kolicina, datum_povrata, razlog_povrata)
+        VALUES (p_id_racun, p_id_proizvod, p_kolicina, NOW(), p_razlog_povrata);
+
+        COMMIT;
+
+        SELECT 'Povrat proizvoda je uspješno obavljen.' AS success_message;
+    ELSE
+        -- Ako nema dovoljno proizvoda u inventaru
+        SELECT 'Nemate dovoljno proizvoda u inventaru za povrat.' AS error_message;
+    END IF;
+END;
+
+DELIMITER ;
+
+
+    
+    
+    -- OKIDAČ
+    -- Sprječava duplu dostavu
+    DELIMITER//
+	CREATE TRIGGER sprijeci_duple_dostave
+	BEFORE INSERT ON dostave
+	FOR EACH ROW
+	BEGIN
+    DECLARE dostava_postoji INT;
+
+    SELECT COUNT(*) INTO dostava_postoji
+    FROM stavke_racuna sr
+    JOIN racuni r ON sr.id_racun = r.id_racun
+    WHERE r.id_racun = NEW.id_racun AND sr.id_proizvod = NEW.id_proizvod;
+
+    IF dostava_postoji > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Dostava za ovaj proizvod i račun već postoji!';
+    END IF;
+	END;
+
+DELIMITER ;
