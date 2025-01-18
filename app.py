@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_mysqldb import MySQL
 
 app=Flask(__name__)
@@ -12,41 +12,95 @@ app.config['MYSQL_DB']='baza_skladiste'
 
 mysql=MySQL(app)
 
-@app.route('/proizvodi', methods=['GET'])
-def proizvodi():
+@app.route('/proizvodi_get', methods=['GET'])
+def proizvodi_get():
 
     curr=mysql.connection.cursor()
 
     curr.execute("SELECT * FROM proizvodi")
-    proizvodi=curr.fetchall()
+    proizvodi_data=curr.fetchall()
 
     curr.close()
 
-    return jsonify(proizvodi)
+    return render_template('get_proizvodi.html', proizvodi_data=proizvodi_data)
 
-# (ovo sam upiso u cmd)curl -X POST -F "id_proizvod=32" -F "naziv_proizvoda=Jana jagoda" -F "opis=voda s okusom jagode" -F "cijena=1.60" -F "kolicina_na_skladistu=70" -F "id_kategorija=41" -F "id_dobavljac=80" http://localhost:8000/proizvodi
+@app.route('/insert_proizvod_form', methods=['GET'])
+def insert_proizvod_form():
 
-@app.route('/proizvodi', methods=['POST'])
+    curr = mysql.connection.cursor()
+
+    curr.execute("SELECT * FROM kategorije")
+    kategorije = curr.fetchall()
+
+    curr.close()
+
+    curr = mysql.connection.cursor()
+
+    curr.execute("SELECT * FROM dobavljaci")
+    dobavljaci = curr.fetchall()
+
+    curr.close()
+
+    return render_template('insert_proizvod.html', kategorije=kategorije, dobavljaci=dobavljaci)
+
+@app.route('/proizvodi_post', methods=['GET', 'POST'])
 def insert_proizvod():
+    if request.method == 'GET':
+        curr = mysql.connection.cursor()
 
-    data=request.form
-    print(data)
+        curr.execute("SELECT * FROM kategorije")
+        kategorije = curr.fetchall()
 
-    id_proizvod=data['id_proizvod']
-    naziv_proizvoda=data['naziv_proizvoda']
-    opis=data['opis']
-    cijena=data['cijena']
-    kolicina_na_skladistu=data['kolicina_na_skladistu']
-    id_kategorija=data['id_kategorija']
-    id_dobavljac=data['id_dobavljac']
+        curr.close()
 
-    cur=mysql.connection.cursor()
-    cur.execute('INSERT INTO proizvodi(id_proizvod,naziv_proizvoda,opis,cijena,kolicina_na_skladistu,id_kategorija,id_dobavljac) values(%s,%s,%s,%s,%s,%s,%s)', (id_proizvod,naziv_proizvoda,opis,cijena,kolicina_na_skladistu,id_kategorija,id_dobavljac))
-    mysql.connection.commit()
-    cur.close()
+        curr = mysql.connection.cursor()
 
-    return jsonify({'msg':'proizvod '+naziv_proizvoda+' uspješno spremljen'})
+        curr.execute("SELECT * FROM dobavljaci")
+        dobavljaci = curr.fetchall()
 
+        curr.close()
+
+        return render_template('insert_proizvod.html', kategorije=kategorije, dobavljaci=dobavljaci)
+
+    elif request.method == 'POST':
+
+        try:
+
+            id_proizvod = request.form['id_proizvod']
+
+            naziv_proizvoda = request.form['naziv_proizvoda']
+
+            opis = request.form['opis']
+
+            cijena = request.form['cijena']
+
+            kolicina_na_skladistu = request.form['kolicina_na_skladistu']
+
+            id_kategorija = request.form['id_kategorija']
+
+            id_dobavljac = request.form['id_dobavljac']
+
+            cur = mysql.connection.cursor()
+
+            cur.execute(
+
+                'INSERT INTO proizvodi (id_proizvod, naziv_proizvoda, opis, cijena, kolicina_na_skladistu, id_kategorija, id_dobavljac) '
+        
+                'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+
+                (id_proizvod, naziv_proizvoda, opis, cijena, kolicina_na_skladistu, id_kategorija, id_dobavljac)
+
+            )
+
+            mysql.connection.commit()
+
+            cur.close()
+
+            return redirect(url_for('proizvodi_get'))
+
+        except Exception as e:
+
+            return f"Došlo je do greške: {e}"
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
