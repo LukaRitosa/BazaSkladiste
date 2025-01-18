@@ -920,6 +920,194 @@ select *
 	from inventar
 where id_skladiste=123 ;
 
+-- RAMIC:
+
+-- UPITI:
+-- 1.) Pronalazak svih dobavljačkih narudžbi s ukupnim iznosom većim od 100.00:
+SELECT 
+    dn.id_dobavljacka_narudzba AS IDNarudzbe,
+    d.naziv_dobavljaca AS NazivDobavljaca,
+    dn.datum_narudzbe AS DatumNarudzbe,
+    p.iznos AS IznosPlacanja
+FROM dobavljacke_narudzbe dn
+JOIN dobavljaci d ON dn.id_dobavljac = d.id_dobavljac
+JOIN placanja p ON dn.id_dobavljacka_narudzba = p.id_dobavljacka_narudzba
+WHERE p.iznos > 100.00;
+
+-- 2.) Ukupna naručena količina za svaki proizvod u svim dobavljačkim narudžbama:
+SELECT p.naziv_proizvoda AS NazivProizvoda, COUNT SUM(sdn.kolicina) AS UkupnaNarucenaKolicina
+FROM stavke_dobavljacke_narudzbe sdn
+JOIN proizvodi p ON sdn.id_proizvod = p.id_proizvod
+GROUP BY p.naziv_proizvoda
+ORDER BY UkupnaNarucenaKolicina DESC;
+
+-- 3.) Prikaz svih dobavljačkih narudžbi koje su plaćene putem "kartica":
+SELECT 
+    dn.id_dobavljacka_narudzba AS IDNarudzbe,
+    d.naziv_dobavljaca AS NazivDobavljaca,
+    dn.datum_narudzbe AS DatumNarudzbe,
+    p.iznos AS IznosPlacanja
+FROM dobavljacke_narudzbe dn
+JOIN dobavljaci d ON dn.id_dobavljac = d.id_dobavljac
+JOIN placanja p ON dn.id_dobavljacka_narudzba = p.id_dobavljacka_narudzba
+WHERE p.nacin_placanja = 'Kartica';
+
+-- POGLED:
+-- Prikaz dobavljačkih narudžbi s detaljima o stavkama i plaćanju:
+CREATE VIEW pregled_narudzbi AS
+SELECT 
+    dn.id_dobavljacka_narudzba AS IDNarudzbe,
+    d.naziv_dobavljaca AS Dobavljac,
+    dn.datum_narudzbe AS DatumNarudzbe,
+    p.iznos AS IznosPlacanja,
+    sdn.id_proizvod AS IDProizvoda,
+    sdn.kolicina AS Kolicina
+FROM dobavljacke_narudzbe dn
+JOIN dobavljaci d ON dn.id_dobavljac = d.id_dobavljac
+JOIN placanja p ON dn.id_dobavljacka_narudzba = p.id_dobavljacka_narudzba
+JOIN stavke_dobavljacke_narudzbe sdn ON dn.id_dobavljacka_narudzba = sdn.id_dobavljacka_narudzba;
+
+-- FUNKCIJE:
+-- 1.) Izračun ukupne količine proizvoda iz dobavljačkih narudžbi:
+DELIMITER //
+CREATE FUNCTION UkupnaKolicinaProizvoda(proizvodID INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE ukupnaKolicina INT;
+
+    SELECT 
+        SUM(kolicina)
+    INTO 
+        ukupnaKolicina
+    FROM 
+        stavke_dobavljacke_narudzbe
+    WHERE 
+        id_proizvod = proizvodID;
+
+    RETURN IFNULL(ukupnaKolicina, 0);
+END;
+//
+DELIMITER ;
+SELECT * FROM proizvod;
+SELECT UkupnaKolicinaProizvoda(1) FROM dual;
+
+-- 2.) Izračun prosječnog iznosa plaćanja za dobavljačke narudžbe:
+DELIMITER //
+CREATE FUNCTION ProsjecniIznosPlacanja(dobavljacID INT)
+RETURNS DECIMAL(10, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE prosjecniIznos DECIMAL(10, 2);
+
+    SELECT 
+        AVG(p.iznos)
+    INTO 
+        prosjecniIznos
+    FROM 
+        placanja p
+    JOIN 
+        dobavljacke_narudzbe dn ON p.id_dobavljacka_narudzba = dn.id_dobavljacka_narudzba
+    WHERE 
+        dn.id_dobavljac = dobavljacID;
+
+    RETURN IFNULL(prosjecniIznos, 0.00);
+END;
+//
+DELIMITER ;
+SELECT * FROM placanja;
+SELECT ProsjecniIznosPlacanja(81) FROM dual;
+
+-- PROCEDURE:
+-- 1.) Dodavanje nove dobavljačke narudžbe:
+DELIMITER //
+CREATE PROCEDURE DodajDobavljackuNarudzbu(
+    IN idDobavljac INT,
+    IN datumNarudzbe DATETIME,
+    IN stavke JSON
+)
+BEGIN
+    DECLARE noviID INT;
+    INSERT INTO dobavljacke_narudzbe (id_dobavljac, datum_narudzbe)
+    VALUES (idDobavljac, datumNarudzbe);
+
+    SET noviID = LAST_INSERT_ID();
+END;
+//
+DELIMITER;
+-- 2.) Ažuriranje plaćanje za određenu dobavljačku narudžbu:
+DELIMITER //
+CREATE PROCEDURE AzurirajPlacanje(
+    IN idNarudzba INT,
+    IN noviIznos DECIMAL(10, 2),
+    IN nacinPlacanja VARCHAR(30)
+)
+BEGIN
+    UPDATE placanja
+    SET iznos = noviIznos, nacin_placanja = nacinPlacanja, datum_placanja = NOW()
+    WHERE id_dobavljacka_narudzba = idNarudzba;
+END;
+//
+DELIMITER ;
+
+-- OKIDAČ (TRIGGER):
+-- sprječavanje umetanje stavke dobavljačke narudžbe s količinom manjom od 1 ili većom od 1000:
+DELIMITER //
+CREATE TRIGGER sprijeci_neispravnu_kolicinu
+BEFORE INSERT ON stavke_dobavljacke_narudzbe
+FOR EACH ROW
+BEGIN
+    IF NEW.kolicina < 1 OR NEW.kolicina > 1000 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Količina mora biti između 1 i 1000.';
+    END IF;
+END;
+//
+DELIMITER ;
+
+-- TRANSAKCIJA:
+-- Dodavanje narudžbi s uplatama:
+START TRANSACTION;
+
+-- Provjera postoji li dobavljač
+IF NOT EXISTS (SELECT 1 FROM dobavljaci WHERE id_dobavljac = 81) THEN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Dobavljač s ID-om 81 ne postoji.';
+END IF;
+
+INSERT INTO dobavljacke_narudzbe (id_dobavljacka_narudzba, id_dobavljac, datum_narudzbe)
+VALUES (511, 81, NOW());
+
+IF NOT EXISTS (SELECT 1 FROM proizvodi WHERE id_proizvod = 1) THEN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Proizvod s ID-om 1 ne postoji.';
+END IF;
+
+IF NOT EXISTS (SELECT 1 FROM proizvodi WHERE id_proizvod = 2) THEN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Proizvod s ID-om 2 ne postoji.';
+END IF;
+
+INSERT INTO stavke_dobavljacke_narudzbe (id_stavka_dobavljaca, id_dobavljacka_narudzba, id_proizvod, kolicina)
+VALUES 
+(601, 511, 1, 50),
+(602, 511, 2, 100);
+
+IF 150.00 <= 0 THEN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Iznos plaćanja mora biti veći od 0.';
+END IF;
+
+INSERT INTO placanja (id_placanje, id_dobavljacka_narudzba, iznos, datum_placanja, nacin_placanja)
+VALUES 
+(591, 511, 150.00, NOW(), 'Kartica');
+
+COMMIT;
+
 -- SANJA:
 
 -- Broj zaposlenika po skladištu(POGLED):
@@ -972,6 +1160,7 @@ END //
 DELIMITER ;
 
 SELECT * FROM narudzbe;
+
 SELECT  broj_narudzbi_zaposlenika(165) FROM DUAL;
 
 -- 2.) Dohvaćanje ukupnog broja zaposlenika u određenom skladištu
