@@ -102,5 +102,12 @@ def insert_proizvod():
 
             return f"Došlo je do greške: {e}"
 
+
+
+@app.route('/')
+def index():
+    return render_template('pocetna.html')
+    
+
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
