@@ -709,6 +709,10 @@ INSERT INTO povrati_proizvoda(id_povrat, id_racun, id_proizvod, kolicina, datum_
 (709, 429, 29, 2, '2025-03-11','Pogrešna boja'),
 (710, 430, 3, 10, '2025-03-12','Poslana pogrešna kolićina');
 
+-- |||||||||||||||BITNO||||||||||||||||
+CREATE USER 'radnik'@'localhost' IDENTIFIED BY 'lozinka';
+GRANT ALL PRIVILEGES ON baza_skladiste.* TO 'radnik'@'localhost';
+-- |||||||||||||||BITNO||||||||||||||||
 
 
 -- Luka
