@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaposlenici</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #a5a5a5;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #c7c7c7;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Početna</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('proizvodi_get') }}">Proizvodi</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('zaposlenici_get') }}" >Zaposlenici</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('get_skladista') }}" >Skladišta</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('inventar_get') }}" >Inventar</a>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <a href="{{ url_for('insert_zaposlenik_form') }}" class="btn">Dodaj novog zaposlenika</a>
+    <br><br>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Ime</th>
+                <th>Prezime</th>
+                <th>Email</th>
+                <th>Telefon</th>
+                <th>Skladište</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for zaposlenik in zaposlenici_data %}
+                <tr>
+                    <td>{{ zaposlenik[0] }}</td>
+                    <td>{{ zaposlenik[1] }}</td>
+                    <td>{{ zaposlenik[2] }}</td>
+                    <td>{{ zaposlenik[3] }}</td>
+                    <td>{{ zaposlenik[4] }}</td>
+                    <td>{{ zaposlenik[5] }}</td>
+                    <td>
+                        <a href="{{ url_for('get_zaposlenik', id_zaposlenik=zaposlenik[0]) }}" class="btn">Pogledaj</a>
+                        <form action="{{ url_for('obrisi_zaposlenik', id_zaposlenik=zaposlenik[0]) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Jeste li sigurni da želite obrisati ovog zaposlenika?');">Obriši</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

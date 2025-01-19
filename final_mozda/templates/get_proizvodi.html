@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Proizvodi</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #a5a5a5;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #c7c7c7;
+        }
+    </style>
+
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Početna</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('proizvodi_get') }}">Proizvodi</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('zaposlenici_get') }}" >Zaposlenici</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('get_skladista') }}" >Skladišta</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('inventar_get') }}" >Inventar</a>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+<h2>Proizvodi</h2>
+
+
+    <div class="button-container">
+        <a href="{{ url_for('insert_proizvod_form') }}" class="button">Dodaj Novi Proizvod</a>
+    </div>
+
+    <br>
+    <br>
+
+<table>
+    <head>
+        <tr>
+            <th>Id proizvod</th>
+            <th>Naziv</th>
+            <th>Opis</th>
+            <th>Cijena</th>
+            <th>Kolicina na skladištu</th>
+            <th>Id kategorija</th>
+            <th>Id dobavljac</th>
+        </tr>
+    </head>
+    <body>
+        {%for row in proizvodi_data %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[3] }}</td>
+                <td>{{ row[4] }}</td>
+                <td>{{ row[5] }}</td>
+                <td>{{ row[6] }}</td>
+            </tr>
+        {% endfor %}
+    </body>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,43 @@
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocetna Stranica</title>
+    <style>
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .container {
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dobrodošli u Skladište!</h1>
+        <p>Izbor opcija:</p>
+        <a href="{{ url_for('zaposlenici_get') }}" class="btn">Zaposlenici</a><br><br>
+        <a href="{{ url_for('proizvodi_get')}}" class="btn">Proizvodi</a><br><br>
+        <a href="{{ url_for('get_skladista') }}" class="btn" >Skladišta</a><br><br>
+        <a href="{{ url_for('inventar_get') }}" class="btn" >Inventar</a><br><br>
+    </div>
+</body>
+</html>

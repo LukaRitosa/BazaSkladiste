@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Insert Proizvod Form</title>
+</head>
+<body>
+
+<h2>Unesi Novi Proizvod</h2>
+
+    <div class="button-container">
+        <a href="{{ url_for('proizvodi_get') }}" class="button">Natrag</a>
+    </div>
+
+</body>
+<form method="POST" action="{{url_for('insert_proizvod')}}">
+
+    <label for="id_proizvod">Id proizvod</label>
+    <input type="number" name="id_proizvod" required><br>
+
+    <label for="naziv_proizvoda">Naziv proizvoda</label>
+    <input type="text" name="naziv_proizvoda" required><br>
+
+    <label for="opis">Opis</label>
+    <input type="text" name="opis" required><br>
+
+    <label for="cijena">Cijena</label>
+    <input type="number" placeholder="1.0" step="0.01" min="0" name="cijena" required><br>
+
+    <label for="kolicina_na_skladistu">Količina na skladištu</label>
+    <input type="number" name="kolicina_na_skladistu" required><br>
+
+    <label for="id_kategorija">Id kategorija</label>
+    <label for="id_kategorija">Id kategorija</label>
+    <select name="id_kategorija" required>
+        <option disabled selected value></option>
+
+        {% for kategorija in kategorije %}
+        <option value="{{ kategorija[0] }}">{{ kategorija[1] }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label for="id_dobavljac">Id dobavljac</label>
+    <select name="id_dobavljac" required>
+        <option disabled selected value></option>
+
+        {% for dobavljac in dobavljaci %}
+        <option value="{{ dobavljac[0] }}">{{ dobavljac[1] }}</option>
+        {% endfor %}
+    </select><br>
+
+
+    <input type="submit" value="Potvrdi">
+</form>
+</html>

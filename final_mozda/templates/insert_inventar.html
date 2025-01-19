@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodaj Inventar</title>
+</head>
+<body>
+    <h1>Dodaj Inventar</h1>
+    <form action="{{ url_for('insert_inventar') }}" method="post">
+        <label for="id_skladiste">Skladište:</label>
+        <select name="id_skladiste" id="id_skladiste" required>
+            {% for skladiste in skladista %}
+                <option value="{{ skladiste[0] }}">{{ skladiste[1] }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="id_proizvod">Proizvod:</label>
+        <select name="id_proizvod" id="id_proizvod" required>
+            {% for proizvod in proizvodi %}
+                <option value="{{ proizvod[0] }}">{{ proizvod[1] }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="trenutna_kolicina">Trenutna Količina:</label>
+        <input type="number" name="trenutna_kolicina" id="trenutna_kolicina" required><br>
+
+        <button type="submit">Dodaj</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dodaj Novo Skladište</title>
+</head>
+<body>
+    <h2>Unesi Novo Skladište</h2>
+    <a href="{{ url_for('get_skladista') }}" class="btn btn-secondary">Natrag</a>
+
+    <form method="POST" action="{{ url_for('insert_skladista') }}">
+        <label for="id_skladiste">Id</label>
+        <input type="number" name="id_skladiste" required><br>
+
+        <label for="naziv_skladista">Naziv</label>
+        <input type="text" name="naziv_skladista" required><br>
+
+        <label for="lokacija">Lokacija</label>
+        <input type="text" name="lokacija" required><br>
+
+        <input type="submit" value="Potvrdi">
+    </form>
+</body>
+</html>
