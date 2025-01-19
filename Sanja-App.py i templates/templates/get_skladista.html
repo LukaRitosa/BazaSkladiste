@@ -1,0 +1,44 @@
+<!--SANJA-->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skladišta</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #a5a5a5;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #c7c7c7;
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('get_insert_form') }}" class="btn btn-primary">Dodaj novo skladište</a>
+    <br><br>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Naziv</th>
+                <th>Lokacija</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in skladista_data %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[2] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
