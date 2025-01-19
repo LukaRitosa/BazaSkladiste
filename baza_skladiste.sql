@@ -191,24 +191,25 @@ CREATE TABLE povrati_proizvoda (
 INSERT INTO kategorije (id_kategorija, naziv_kategorije, opis) VALUES
 (41, 'Pića', 'Bezalkoholna i alkoholna pića'),
 (42, 'Hrana', 'Osnovni prehrambeni proizvodi'),
-(43, 'Higijena', 'Proizvodi za ličnu higijenu'),
-(44, 'Tehnika', 'Elektronski uređaji i dodaci'),
-(45, 'Igračke', 'Razne igračke za decu'),
+(43, 'Higijena', 'Proizvodi za osobnu higijenu'),
+(44, 'Tehnika', 'Elektronički uređaji i dodaci'),
+(45, 'Igračke', 'Razne igračke za djecu'),
 (46, 'Odjeća', 'Odjevni predmeti'),
 (47, 'Obuća', 'Razne vrste obuće'),
-(48, 'Namještaj', 'Nameštaj za kuću i kancelariju'),
+(48, 'Namještaj', 'Namještaj za kuću i ured'),
 (49, 'Kućne potrepštine', 'Proizvodi za svakodnevnu upotrebu'),
 (50, 'Alati', 'Razni alati i oprema'),
 (51, 'Knjige', 'Razne knjige i časopisi'),
 (52, 'Sportska oprema', 'Oprema za sport i rekreaciju'),
-(53, 'Zdravlje', 'Dodaci ishrani i medicinski proizvodi'),
-(54, 'Kancelarijski materijal', 'Pribor za kancelarije i škole'),
+(53, 'Zdravlje', 'Dodaci prehrani i medicinski proizvodi'),
+(54, 'Uredski materijal', 'Pribor za urede i škole'),
 (55, 'Kućanski aparati', 'Mali i veliki kućanski aparati'),
 (56, 'Auto oprema', 'Dodatna oprema za vozila'),
 (57, 'Vrtni alati', 'Oprema za održavanje vrta'),
 (58, 'Dekoracije', 'Ukrasni predmeti za dom'),
-(59, 'Računala', 'Komponente i uređaji za računare'),
+(59, 'Računala', 'Komponente i uređaji za računala'),
 (60, 'Ostalo', 'Razne kategorije koje ne spadaju u ostale');
+
 
 INSERT INTO dobavljaci (id_dobavljac, naziv_dobavljaca, kontakt_osoba, telefon, email, adresa) VALUES
 (80, 'Dobavljač 1', 'Ivan Horvat', '+385912345678', 'ivan.horvat@dobavljaci.com', 'Ulica 1, Zagreb'),
@@ -235,33 +236,34 @@ INSERT INTO proizvodi (id_proizvod, naziv_proizvoda, opis, cijena, kolicina_na_s
 (1, 'Coca-Cola', 'Gazirano piće 0.5L', 1.50, 100, 41, 80),
 (2, 'Voda Jana', 'Prirodna mineralna voda 1.5L', 0.80, 200, 41, 80),
 (3, 'Pivo Heineken', 'Limenka 0.33L', 1.20, 150, 41, 80),
-(4, 'Čokolada Milka', 'Mlečna čokolada 100g', 2.00, 300, 42, 81),
-(5, 'Kruh Bijeli', 'Sveže pečen beli hleb 500g', 1.00, 50, 42, 81),
-(6, 'Toalet papir', 'Pakovanje od 10 rolni', 3.50, 400, 43, 82),
-(7, 'Pasta za zube Colgate', 'Osvežavajuća pasta za zube 75ml', 2.20, 250, 43, 82),
-(8, 'Laptop Lenovo', 'Laptop 15.6" sa Intel procesorom', 500.00, 20, 44, 83),
-(9, 'USB kabl', 'USB-C kabl dužine 1m', 5.00, 150, 44, 83),
-(10, 'Lopta za fudbal', 'Oficijalna lopta za fudbal', 25.00, 80, 52, 84),
+(4, 'Čokolada Milka', 'Mliječna čokolada 100g', 2.00, 300, 42, 81),
+(5, 'Kruh Bijeli', 'Svježe pečen bijeli kruh 500g', 1.00, 50, 42, 81),
+(6, 'Toaletni papir', 'Pakiranje od 10 rola', 3.50, 400, 43, 82),
+(7, 'Pasta za zube Colgate', 'Osvježavajuća pasta za zube 75ml', 2.20, 250, 43, 82),
+(8, 'Laptop Lenovo', 'Laptop 15.6" s Intel procesorom', 500.00, 20, 44, 83),
+(9, 'USB kabel', 'USB-C kabel duljine 1m', 5.00, 150, 44, 83),
+(10, 'Lopta za nogomet', 'Službena lopta za nogomet', 25.00, 80, 52, 84),
 (11, 'Igračka robot', 'Interaktivni robot na baterije', 15.00, 90, 45, 85),
 (12, 'Majica', 'Pamučna majica XL', 10.00, 120, 46, 86),
 (13, 'Tenisice Nike', 'Sportske tenisice broj 42', 75.00, 60, 47, 87),
-(14, 'Stolica za kancelariju', 'Ergonomska stolica sa naslonima', 100.00, 15, 48, 88),
-(15, 'Tava za kuhanje', 'Neprianjajuća tava prečnika 24cm', 20.00, 110, 49, 89),
-(16, 'Čekić', 'Metalni čekić sa drvenom drškom', 8.00, 130, 50, 90),
-(17, 'Roman', 'Popularni roman u mekom povezu', 12.00, 70, 51, 91),
-(18, 'Protein Whey', 'Pakovanje od 1kg čokolade', 40.00, 40, 53, 92),
-(19, 'Printer Canon', 'Višenamenski inkjet printer', 120.00, 10, 54, 93),
-(20, 'Mikrovalna pećnica', 'Mikrovalna sa gril funkcijom', 150.00, 5, 55, 94),
-(21, 'Auto sjedište', 'Auto sedište za decu', 200.00, 8, 56, 95),
+(14, 'Stolica za ured', 'Ergonomska stolica s naslonima', 100.00, 15, 48, 88),
+(15, 'Tava za kuhanje', 'Neprijanjajuća tava promjera 24cm', 20.00, 110, 49, 89),
+(16, 'Čekić', 'Metalni čekić s drvenom drškom', 8.00, 130, 50, 90),
+(17, 'Roman', 'Popularni roman u mekom uvezu', 12.00, 70, 51, 91),
+(18, 'Proteinski prah Whey', 'Pakiranje od 1kg čokolade', 40.00, 40, 53, 92),
+(19, 'Printer Canon', 'Višenamjenski inkjet printer', 120.00, 10, 54, 93),
+(20, 'Mikrovalna pećnica', 'Mikrovalna s grill funkcijom', 150.00, 5, 55, 94),
+(21, 'Auto sjedalica', 'Auto sjedalica za djecu', 200.00, 8, 56, 95),
 (22, 'Trimer za travu', 'Električni trimer za travu', 50.00, 20, 57, 96),
-(23, 'Ukrasna vaza', 'Keramička vaza sa šarom', 30.00, 25, 58, 97),
+(23, 'Ukrasna vaza', 'Keramička vaza s uzorkom', 30.00, 25, 58, 97),
 (24, 'Monitor Samsung', '24" Full HD monitor', 180.00, 12, 59, 98),
 (25, 'Krema za ruke', 'Hidratantna krema za ruke 50ml', 5.00, 180, 43, 82),
-(26, 'Klupa za vrt', 'Drvena klupa sa metalnim ramom', 80.00, 25, 57, 96),
-(27, 'Stol za trpezariju', 'Drveni stol za šest osoba', 200.00, 7, 48, 88),
-(28, 'Ruksak za školu', 'Prostrani ruksak sa pregradama', 30.00, 100, 54, 93),
-(29, 'Pametni sat', 'Pametni sat sa brojačem koraka', 100.00, 50, 44, 83),
+(26, 'Klupa za vrt', 'Drvena klupa s metalnim okvirom', 80.00, 25, 57, 96),
+(27, 'Stol za blagovaonicu', 'Drveni stol za šest osoba', 200.00, 7, 48, 88),
+(28, 'Ruksak za školu', 'Prostrani ruksak s pretincima', 30.00, 100, 54, 93),
+(29, 'Pametni sat', 'Pametni sat s brojačem koraka', 100.00, 50, 44, 83),
 (30, 'Četka za kosu', 'Antistatička četka za kosu', 8.00, 140, 43, 82);
+
 
 
 -- SANJA podaci za unos
@@ -676,6 +678,7 @@ INSERT INTO dostave(id_dostava, id_racun, datum_dostave, adresa_dostave, status_
 (668, 429, '2025-03-08', 'Sisačka 16, Sisak', 'Zaprimljeno'),
 (669, 430, '2025-03-09', 'Bjelovarska 17, Bjelovar', 'Zaprimljeno');
 
+-- Error Code: 1136. Column count doesn't match value count at row 6	0.016 sec
 INSERT INTO povrati_proizvoda(id_povrat, id_racun, id_proizvod, kolicina, datum_povrata, razlog_povrata) VALUES
 (681, 401, 1, 4, '2025-02-11','Pogrešna kolićina'),
 (682, 402, 2, 10, '2025-02-12', 'Pogrešna kolićina'),
@@ -712,7 +715,7 @@ INSERT INTO povrati_proizvoda(id_povrat, id_racun, id_proizvod, kolicina, datum_
 CREATE USER 'radnik'@'localhost' IDENTIFIED BY 'lozinka';
 GRANT ALL PRIVILEGES ON baza_skladiste.* TO 'radnik'@'localhost';
 -- |||||||||||||||BITNO||||||||||||||||
-
+select * from inventar;
 
 -- Luka
 
