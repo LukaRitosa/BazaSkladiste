@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalji Zaposlenika</title>
+    <style>
+        table {
+            width: 50%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Detalji Zaposlenika</h2>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <td>{{ zaposlenik[0] }}</td>
+        </tr>
+        <tr>
+            <th>Ime</th>
+            <td>{{ zaposlenik[1] }}</td>
+        </tr>
+        <tr>
+            <th>Prezime</th>
+            <td>{{ zaposlenik[2] }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ zaposlenik[3] }}</td>
+        </tr>
+        <tr>
+            <th>Telefon</th>
+            <td>{{ zaposlenik[4] }}</td>
+        </tr>
+        <tr>
+            <th>ID Skladišta</th>
+            <td>{{ zaposlenik[5] }}</td>
+        </tr>
+    </table>
+
+    <br>
+    <a href="{{ url_for('zaposlenici_get') }}" class="btn">Povratak na popis zaposlenika</a>
+
+</body>
+</html>
