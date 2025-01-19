@@ -102,6 +102,55 @@ def insert_proizvod():
 
             return f"Došlo je do greške: {e}"
 
+@app.route('/inventar', methods=['GET'])
+def inventar_get():
+
+    curr = mysql.connection.cursor()
+
+    curr.execute("SELECT * FROM inventar")
+    inventar_data = curr.fetchall()
+
+    curr.close()
+
+    return render_template('inventar_get.html', inventar_data=inventar_data)
+
+@app.route('/insert_inventar_form', methods=['GET'])
+def insert_inventar_form():
+   
+    curr = mysql.connection.cursor()
+
+    curr.execute("SELECT * FROM skladista")
+    skladista = curr.fetchall()
+
+    curr.execute("SELECT id_proizvod, naziv_proizvoda FROM proizvodi")
+    proizvodi = curr.fetchall()
+
+    curr.close()
+
+    return render_template('insert_inventar.html', skladista=skladista, proizvodi=proizvodi)
+
+
+@app.route('/inventar_post', methods=['POST'])
+def insert_inventar():
+    try:
+        id_skladiste = request.form['id_skladiste']
+        id_proizvod = request.form['id_proizvod']
+        trenutna_kolicina = request.form['trenutna_kolicina']
+
+        cur = mysql.connection.cursor()
+
+
+        cur.execute('INSERT INTO inventar (id_skladiste, id_proizvod, trenutna_kolicina)'
+            'VALUES (%s, %s, %s)', 
+            (id_skladiste, id_proizvod, trenutna_kolicina))
+
+        mysql.connection.commit()
+        cur.close()
+
+        return redirect(url_for('inventar'))
+
+    except Exception as e:
+        return f"Došlo je do greške: {e}"
 
 
 @app.route('/')
