@@ -117,8 +117,6 @@ CREATE TABLE racuni (
     CONSTRAINT zaposlenik_id_fk_r FOREIGN KEY (id_zaposlenik) REFERENCES zaposlenici(id_zaposlenik)
 );
 
-drop TABLE stavke_racuna;
-
 CREATE TABLE stavke_racuna (
     id_stavka_racun INTEGER PRIMARY KEY,
     id_racun INTEGER NOT NULL,
@@ -502,6 +500,7 @@ INSERT INTO placanja (id_placanje, id_dobavljacka_narudzba, iznos, datum_placanj
 (590, 510, 300.00, '2024-03-02 14:30:00', 'Online');
 
 
+-- TONI unos podataka
 INSERT INTO kupci (id_kupac, ime, prezime, email, telefon, adresa) VALUES
 (361, 'Ivan', 'Horvat', 'ivan.horvat1@example.com', '0912345678', 'Zagrebačka 1, Zagreb'),
 (362, 'Ana', 'Kovač', 'ana.kovac2@example.com', '0912345679', 'Split 5, Split'),
@@ -1427,3 +1426,224 @@ DELIMITER ;
 	END;
 
 DELIMITER ;
+
+
+-- TONI:
+
+-- UPITI:
+
+-- 1) Prikaz svih racuna kupaca sa adresom u Rijeci
+
+SELECT 
+    r.id_racun,
+    r.datum_racuna,
+    k.ime AS ime_kupca,
+    k.prezime AS prezime_kupca,
+    k.adresa
+FROM 
+    racuni r
+JOIN 
+    kupci k ON r.id_kupac = k.id_kupac
+WHERE 
+    k.adresa LIKE '%Rijeka%';
+
+-- 2) Prikaz racuna kupaca u zadnjih 90 dana
+
+SELECT 
+    r.id_racun,
+    r.datum_racuna,
+    k.ime AS ime_kupca,
+    k.prezime AS prezime_kupca,
+    k.email AS email_kupca,
+    k.telefon AS telefon_kupca
+FROM 
+    racuni r
+JOIN 
+    kupci k ON r.id_kupac = k.id_kupac
+WHERE 
+    r.datum_racuna >= NOW() - INTERVAL 90 DAY
+ORDER BY r.datum_racuna DESC;
+
+-- 3) Prikaz najprodavanijeg proizvoda
+
+SELECT 
+    sr.id_proizvod,
+    p.naziv_proizvoda AS naziv_proizvoda,
+    SUM(sr.kolicina) AS ukupno_prodano
+FROM 
+    stavke_racuna sr
+JOIN 
+    proizvodi p ON sr.id_proizvod = p.id_proizvod
+GROUP BY 
+    sr.id_proizvod, p.naziv_proizvoda
+ORDER BY 
+    ukupno_prodano DESC
+LIMIT 1;
+
+-- FUNKCIJE:
+
+-- 1) Dohvaćanje ukupnog broja proizvoda u računu po ID-ju
+
+DELIMITER //
+
+CREATE FUNCTION BrojProizvodaURacunu(racun_id INT) 
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE broj_proizvoda INT;
+
+    -- Računanje broja proizvoda u računu
+    SELECT SUM(kolicina)
+    INTO broj_proizvoda
+    FROM stavke_racuna
+    WHERE id_racun = racun_id;
+
+    RETURN broj_proizvoda;
+END //
+
+SELECT BrojProizvodaURacunu(401);
+
+-- 2) Dohvaćanje ukupnog broja računa kupca po ID-ju
+
+DELIMITER //
+
+CREATE FUNCTION UkupanBrojRacunaKupca(kupac_id INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE broj_racuna INT;
+
+    SELECT 
+        COUNT(*) INTO broj_racuna
+    FROM 
+        racuni
+    WHERE 
+        id_kupac = kupac_id;
+
+    RETURN broj_racuna;
+END //
+
+DELIMITER ;
+
+SELECT UkupanBrojRacunaKupca(367)
+
+-- PROCEDURE:
+
+-- 1) Ažuriranje podataka kupca
+
+DELIMITER //
+
+CREATE PROCEDURE AzurirajPodatkeKupca(
+    IN p_id_kupac INT,
+    IN p_ime VARCHAR(30),
+    IN p_prezime VARCHAR(30),
+    IN p_email VARCHAR(30),
+    IN p_telefon VARCHAR(20),
+    IN p_adresa VARCHAR(50)
+)
+BEGIN
+    IF EXISTS (SELECT 1 FROM kupci WHERE id_kupac = p_id_kupac) THEN
+        START TRANSACTION;
+
+        UPDATE kupci
+        SET ime = p_ime,
+            prezime = p_prezime,
+            email = p_email,
+            telefon = p_telefon,
+            adresa = p_adresa
+        WHERE id_kupac = p_id_kupac;
+
+        IF ROW_COUNT() > 0 THEN
+            COMMIT;
+            SELECT 'Podaci kupca su uspešno ažurirani.' AS success_message;
+        ELSE
+            ROLLBACK;
+            SELECT 'Greška: Nisu pronađeni podaci za ažuriranje.' AS error_message;
+        END IF;
+    ELSE
+        SELECT 'Greška: Kupac s tim ID-om ne postoji.' AS error_message;
+    END IF;
+END //
+
+DELIMITER ;
+
+-- 2) Dodavanje novog racuna
+
+DELIMITER //
+
+CREATE PROCEDURE DodajRacun(
+    IN p_id_kupac INT,
+    IN p_datum_racuna DATETIME,
+    IN p_id_zaposlenik INT
+)
+BEGIN
+    DECLARE noviID INT;
+    
+    INSERT INTO racuni (id_kupac, datum_racuna, id_zaposlenik)
+    VALUES (p_id_kupac, p_datum_racuna, p_id_zaposlenik);
+
+    SET noviID = LAST_INSERT_ID();
+
+    SELECT noviID AS novi_id_racun;
+END //
+
+DELIMITER ;
+
+-- TRANSAKCIJA:
+
+-- Dodavanje novog racuna
+
+DELIMITER //
+
+CREATE PROCEDURE DodajNoviRacun(
+    IN p_id_kupac INT,
+    IN p_datum_racuna DATETIME,
+    IN p_id_zaposlenik INT
+)
+BEGIN
+    DECLARE v_exist INT;
+
+    SELECT COUNT(*)
+    INTO v_exist
+    FROM kupci
+    WHERE id_kupac = p_id_kupac;
+
+    IF v_exist > 0 THEN
+        START TRANSACTION;
+
+        INSERT INTO racuni (id_kupac, datum_racuna, id_zaposlenik)
+        VALUES (p_id_kupac, p_datum_racuna, p_id_zaposlenik);
+
+        COMMIT;
+        SELECT 'Novi račun je uspešno dodat.' AS success_message;
+    ELSE
+        SELECT 'Greška: Kupac sa tim ID-jem ne postoji.' AS error_message;
+    END IF;
+
+END //
+
+DELIMITER ;
+
+-- OKIDAČ (TRIGGER):
+
+-- Sprječava kreiranje računa ako je već korišten taj ID
+
+DELIMITER //
+
+CREATE TRIGGER SprijeciDuplikatRacuna
+BEFORE INSERT ON racuni
+FOR EACH ROW
+BEGIN
+    DECLARE v_exist INT;
+
+    SELECT COUNT(*)
+    INTO v_exist
+    FROM racuni
+    WHERE id_racun = NEW.id_racun;
+
+    IF v_exist > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Račun sa tim ID-jem već postoji.';
+    END IF;
+END;
+
+DELIMITER;
