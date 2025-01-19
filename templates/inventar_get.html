@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+        <title>Inventar</title>
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th, td {
+                border: 1px solid #a5a5a5;
+                padding: 8px;
+                text-align: center;
+            }
+            th {
+                background-color: #c7c7c7;
+            }
+        </style>
+    </head>
+    <body>
+        <a href="{{ url_for('insert_inventar_form') }}" class="button">Dodaj Novu Stavku</a>
+    
+    <table>
+        <head>
+            <tr>
+                <th>ID</th>
+                <th>Skladiste</th>
+                <th>Proizvod</th>
+                <th>Trenutna Količina</th>
+            </tr>
+        </head>
+        <body>
+    <br>
+    <br>
+    {% for row in inventar_data %}
+    <tr>
+        <td>{{ row.id_inventar }}</td>
+        <td>{{ row.id_skladiste }}</td>
+        <td>{{ row.id_proizvod }}</td>
+        <td>{{ row.trenutna_kolicina }}</td>
+    </tr>
+{% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+    </body>
+</html>
