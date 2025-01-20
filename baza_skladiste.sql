@@ -1504,6 +1504,8 @@ BEGIN
     RETURN broj_proizvoda;
 END //
 
+DELIMITER ;
+
 SELECT BrojProizvodaURacunu(401);
 
 -- 2) Dohvaćanje ukupnog broja računa kupca po ID-ju
