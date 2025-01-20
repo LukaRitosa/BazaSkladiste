@@ -241,23 +241,30 @@ def insert_inventar_form():
 @app.route('/inventar_post', methods=['POST'])
 def insert_inventar():
     try:
+       
+        id_inventar = request.form['id_inventar']
         id_skladiste = request.form['id_skladiste']
         id_proizvod = request.form['id_proizvod']
         trenutna_kolicina = request.form['trenutna_kolicina']
 
+
         cur = mysql.connection.cursor()
 
-        cur.execute('INSERT INTO inventar (id_skladiste, id_proizvod, trenutna_kolicina)'
-                    'VALUES (%s, %s, %s)',
-                    (id_skladiste, id_proizvod, trenutna_kolicina))
+ 
+        cur.execute(
+            'INSERT INTO inventar (id_inventar, id_skladiste, id_proizvod, trenutna_kolicina) '
+            'VALUES (%s, %s, %s, %s)', 
+            (id_inventar, id_skladiste, id_proizvod, trenutna_kolicina)
+        )
 
         mysql.connection.commit()
         cur.close()
 
-        return redirect(url_for('inventar'))
+        return redirect(url_for('inventar_get'))
 
     except Exception as e:
         return f"Došlo je do greške: {e}"
+"
 
 @app.route('/')
 def index():
