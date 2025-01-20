@@ -84,6 +84,9 @@
 <body>
     <h1>Dodaj Inventar</h1>
     <form action="{{ url_for('insert_inventar') }}" method="post">
+        <label for="id_inventar">Inventar</label>
+        <input type="number" name="id_inventar" id="id_inventar" required><br>
+        
         <label for="id_skladiste">Skladište:</label>
         <select name="id_skladiste" id="id_skladiste" required>
             {% for skladiste in skladista %}
