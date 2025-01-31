@@ -6,8 +6,8 @@ app=Flask(__name__)
 app.config['JSON_AS_ASCII']= False
 
 app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER']= 'radnik'
-app.config['MYSQL_PASSWORD']='lozinka'
+app.config['MYSQL_USER']= 'root'
+app.config['MYSQL_PASSWORD']='root'
 app.config['MYSQL_DB']='baza_skladiste'
 
 mysql=MySQL(app)
