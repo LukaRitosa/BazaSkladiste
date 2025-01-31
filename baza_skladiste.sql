@@ -711,12 +711,7 @@ INSERT INTO povrati_proizvoda(id_povrat, id_racun, id_proizvod, kolicina, datum_
 (709, 429, 29, 2, '2025-03-11', 'Pogrešna boja'),
 (710, 430, 3, 10, '2025-03-12', 'Pogrešna količina');
 
--- |||||||||||||||BITNO||||||||||||||||
-CREATE USER 'radnik'@'localhost' IDENTIFIED BY 'lozinka';
-GRANT ALL PRIVILEGES ON baza_skladiste.* TO 'radnik'@'localhost';
--- |||||||||||||||BITNO||||||||||||||||
 select * from inventar;
-
 -- Luka
 
 select naziv_dobavljaca, naziv_kategorije, count(*) broj_proizvoda
@@ -729,7 +724,7 @@ group by dobavljaci.naziv_dobavljaca, kategorije.id_kategorija
 order by broj_proizvoda desc
 limit 3;
 
-select racuni.id_racun, sum(cijena*kolicina) ukupno
+select racuni.id_racun, sum(p.cijena*sr.kolicina) ukupno
 	from racuni 
 join kupci k
 	on k.id_kupac=racuni.id_kupac
@@ -749,8 +744,6 @@ group by k.naziv_kategorije
 order by ukupno_prodano desc
 limit 5;
 
-
-
 CREATE VIEW pregled_zaliha AS
 SELECT s.naziv_skladista, p.naziv_proizvoda, i.trenutna_kolicina
 	FROM inventar i
@@ -759,13 +752,11 @@ JOIN skladista s
 JOIN proizvodi p 
 	ON i.id_proizvod = p.id_proizvod;
  
- 
 DELIMITER // 
 CREATE TRIGGER ai_ulazi_proizvoda
 AFTER INSERT ON ulazi_proizvoda
 FOR EACH ROW
 BEGIN
-    
     UPDATE proizvodi
 		SET kolicina_na_skladistu = kolicina_na_skladistu + NEW.kolicina
     WHERE id_proizvod = NEW.id_proizvod;
@@ -778,7 +769,6 @@ END//
 DELIMITER ;
 
 select @@autocommit;
-
 SET AUTOCOMMIT= off;
 
 
@@ -813,7 +803,6 @@ CALL novi_poizvod(31, 'Fen za kosu', 'Snažan fen za kosu', 12.00, 140, 43, 82);
 
 select *
 	from proizvodi;
-
 
 
 DELIMITER //
@@ -941,7 +930,7 @@ JOIN placanja p ON dn.id_dobavljacka_narudzba = p.id_dobavljacka_narudzba
 WHERE p.iznos > 100.00;
 
 -- 2.) Ukupna naručena količina za svaki proizvod u svim dobavljačkim narudžbama:
-SELECT p.naziv_proizvoda AS NazivProizvoda, COUNT SUM(sdn.kolicina) AS UkupnaNarucenaKolicina
+SELECT p.naziv_proizvoda AS NazivProizvoda, SUM(sdn.kolicina) AS UkupnaNarucenaKolicina
 FROM stavke_dobavljacke_narudzbe sdn
 JOIN proizvodi p ON sdn.id_proizvod = p.id_proizvod
 GROUP BY p.naziv_proizvoda
@@ -995,7 +984,7 @@ BEGIN
 END;
 //
 DELIMITER ;
-SELECT * FROM proizvod;
+SELECT * FROM proizvodi;
 SELECT UkupnaKolicinaProizvoda(1) FROM dual;
 
 -- 2.) Izračun prosječnog iznosa plaćanja za dobavljačke narudžbe:
@@ -1071,48 +1060,51 @@ END;
 //
 DELIMITER ;
 
--- TRANSAKCIJA:
+-- PROCEDURA+TRANSAKCIJA:
 -- Dodavanje narudžbi s uplatama:
-START TRANSACTION;
+DELIMITER //
 
--- Provjera postoji li dobavljač
-IF NOT EXISTS (SELECT 1 FROM dobavljaci WHERE id_dobavljac = 81) THEN
-    ROLLBACK;
-    SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Dobavljač s ID-om 81 ne postoji.';
-END IF;
+CREATE PROCEDURE DodajNarudzbu()
+BEGIN
+    DECLARE dobavljac_postoji INT;
+    DECLARE proizvod1_postoji INT;
+    DECLARE proizvod2_postoji INT;
+    SELECT COUNT(*) INTO dobavljac_postoji FROM dobavljaci WHERE id_dobavljac = 81;
+    IF dobavljac_postoji = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Dobavljač s ID-om 81 ne postoji.';
+    END IF;
+    SELECT COUNT(*) INTO proizvod1_postoji FROM proizvodi WHERE id_proizvod = 1;
+    IF proizvod1_postoji = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Proizvod s ID-om 1 ne postoji.';
+    END IF;
+    SELECT COUNT(*) INTO proizvod2_postoji FROM proizvodi WHERE id_proizvod = 2;
+    IF proizvod2_postoji = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Proizvod s ID-om 2 ne postoji.';
+    END IF;
+    START TRANSACTION;
+    INSERT INTO dobavljacke_narudzbe (id_dobavljacka_narudzba, id_dobavljac, datum_narudzbe)
+    VALUES (511, 81, NOW());
+    INSERT INTO stavke_dobavljacke_narudzbe (id_stavka_dobavljaca, id_dobavljacka_narudzba, id_proizvod, kolicina)
+    VALUES 
+    (601, 511, 1, 50),
+    (602, 511, 2, 100);
+    IF 150.00 <= 0 THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Iznos plaćanja mora biti veći od 0.';
+    END IF;
+    INSERT INTO placanja (id_placanje, id_dobavljacka_narudzba, iznos, datum_placanja, nacin_placanja)
+    VALUES 
+    (591, 511, 150.00, NOW(), 'Kartica');
+    COMMIT;
+END //
 
-INSERT INTO dobavljacke_narudzbe (id_dobavljacka_narudzba, id_dobavljac, datum_narudzbe)
-VALUES (511, 81, NOW());
+DELIMITER ;
 
-IF NOT EXISTS (SELECT 1 FROM proizvodi WHERE id_proizvod = 1) THEN
-    ROLLBACK;
-    SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Proizvod s ID-om 1 ne postoji.';
-END IF;
-
-IF NOT EXISTS (SELECT 1 FROM proizvodi WHERE id_proizvod = 2) THEN
-    ROLLBACK;
-    SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Proizvod s ID-om 2 ne postoji.';
-END IF;
-
-INSERT INTO stavke_dobavljacke_narudzbe (id_stavka_dobavljaca, id_dobavljacka_narudzba, id_proizvod, kolicina)
-VALUES 
-(601, 511, 1, 50),
-(602, 511, 2, 100);
-
-IF 150.00 <= 0 THEN
-    ROLLBACK;
-    SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Iznos plaćanja mora biti veći od 0.';
-END IF;
-
-INSERT INTO placanja (id_placanje, id_dobavljacka_narudzba, iznos, datum_placanja, nacin_placanja)
-VALUES 
-(591, 511, 150.00, NOW(), 'Kartica');
-
-COMMIT;
+CALL DodajNarudzbu();
 
 -- SANJA:
 
@@ -1278,18 +1270,18 @@ SELECT * FROM stanje_inventara;
 
 -- UPIT 
 	-- 1.Ukupan broj povrata
-    SELECT p.id_proizvod, p.naziv_proizvoda, SUM(i.kolicina) AS broj_povrata
-    FROM povrati_proizvoda
-    JOIN inventar i on p.id_proizvod = i.proizvod_id
+    SELECT p.id_proizvod, p.naziv_proizvoda, SUM(i.trenutna_kolicina) AS broj_povrata
+    FROM proizvodi p
+    JOIN inventar i on p.id_proizvod = i.id_proizvod
     GROUP BY p.id_proizvod, p.naziv_proizvoda
     ORDER BY broj_povrata DESC;
     
     -- 2.Najprodavaniji proizvod
-    SELECT  p.id_proizvod, i.naziv_proizvoda, SUM(n.kolicina) AS ukupno_prodano
+    SELECT  p.id_proizvod, p.naziv_proizvoda, SUM(sr.kolicina) AS ukupno_prodano
 		FROM stavke_racuna sr
 	JOIN proizvodi p ON sr.id_proizvod = p.id_proizvod
 	JOIN inventar i ON p.id_proizvod = i.id_proizvod
-	GROUP BY p.id_proizvod, i.naziv_proizvoda
+	GROUP BY p.id_proizvod, p.naziv_proizvoda
 	ORDER BY ukupno_prodano DESC
 		LIMIT 1;
         
@@ -1303,7 +1295,6 @@ SELECT * FROM stanje_inventara;
     -- FUNKCIJE
     -- 1.Trenutna količina 
     DELIMITER //
-
 	CREATE FUNCTION trenutna_kolicina_proizvoda(p_id_proizvod INTEGER)
 	RETURNS INTEGER
 	DETERMINISTIC
@@ -1318,6 +1309,7 @@ SELECT * FROM stanje_inventara;
 	END //
 
 	DELIMITER ;
+
     
     -- 2.Vraća status dostave prema ID-u
     DELIMITER //
@@ -1334,13 +1326,11 @@ SELECT * FROM stanje_inventara;
    
     RETURN status;
 	END //
-
 	DELIMITER ;
-    
+
     -- Procedura + tranakcija
     -- 1.Pračenje statusa dostave
-    DELIMITER//
-
+    DELIMITER //
 CREATE PROCEDURE azuriraj_status_dostave(
     IN p_id_dostava INT,
     IN p_novi_status VARCHAR(20)
@@ -1359,15 +1349,12 @@ BEGIN
         SELECT 'Status dostave je uspješno ažuriran!' AS success_message;
         COMMIT;
     END IF;
-END $$
-
+END 
+// 
 DELIMITER ;
 
-    
-
 -- 2. Povrat proizvoda
-DELIMITER//
-
+DELIMITER //
 CREATE PROCEDURE PovratProizvoda(
     IN p_id_racun INT,                
     IN p_id_proizvod INT,              
@@ -1403,40 +1390,35 @@ BEGIN
         SELECT 'Nemate dovoljno proizvoda u inventaru za povrat.' AS error_message;
     END IF;
 END;
-
+//
 DELIMITER ;
 
-
-    
-    
     -- OKIDAČ
     -- Sprječava duplu dostavu
-    DELIMITER//
-	CREATE TRIGGER sprijeci_duple_dostave
-	BEFORE INSERT ON dostave
-	FOR EACH ROW
-	BEGIN
+   DELIMITER //
+CREATE TRIGGER sprijeci_duple_dostave
+BEFORE INSERT ON dostave
+FOR EACH ROW
+BEGIN
     DECLARE dostava_postoji INT;
-
+    -- Provjera postoji li već ista dostava
     SELECT COUNT(*) INTO dostava_postoji
-    FROM stavke_racuna sr
-    JOIN racuni r ON sr.id_racun = r.id_racun
-    WHERE r.id_racun = NEW.id_racun AND sr.id_proizvod = NEW.id_proizvod;
-
+    FROM dostave
+    WHERE id_racun = NEW.id_racun;
     IF dostava_postoji > 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Dostava za ovaj proizvod i račun već postoji!';
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Dostava za ovaj proizvod i račun već postoji!';
     END IF;
-	END;
 
+END;
+//
 DELIMITER ;
-
 
 -- TONI:
 
 -- UPITI:
 
 -- 1) Prikaz svih racuna kupaca sa adresom u Rijeci
-
 SELECT 
     r.id_racun,
     r.datum_racuna,
@@ -1506,7 +1488,7 @@ END //
 
 DELIMITER ;
 
-SELECT BrojProizvodaURacunu(401);
+SELECT BrojProizvodaURacunu(401) FROM DUAL;
 
 -- 2) Dohvaćanje ukupnog broja računa kupca po ID-ju
 
@@ -1530,7 +1512,7 @@ END //
 
 DELIMITER ;
 
-SELECT UkupanBrojRacunaKupca(367)
+SELECT UkupanBrojRacunaKupca(367) FROM DUAL;
 
 -- PROCEDURE:
 
@@ -1634,7 +1616,6 @@ DELIMITER ;
 -- Sprječava kreiranje računa ako je već korišten taj ID
 
 DELIMITER //
-
 CREATE TRIGGER SprijeciDuplikatRacuna
 BEFORE INSERT ON racuni
 FOR EACH ROW
@@ -1650,5 +1631,4 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Račun sa tim ID-jem već postoji.';
     END IF;
 END;
-
-DELIMITER;
+// DELIMITER 
